@@ -1,55 +1,127 @@
 @import "tailwindcss";
 
+:root {
+  /* Premium Light Mode design tokens (soft enterprise SaaS workspace) */
+  --bg-950: oklch(98% 0.005 250);       /* Page body bg */
+  --bg-900: oklch(96% 0.005 250);       /* Secondary panels */
+  --bg-800: oklch(100% 0 0);            /* Card backgrounds */
+  --bg-700: oklch(94% 0.008 250);       /* Accent panels / hover base */
+  --border-600: oklch(89% 0.01 250);    /* Borders and outline controls */
+  --text-500: oklch(50% 0.012 250);     /* Muted metadata */
+  --text-400: oklch(35% 0.014 250);     /* Secondary descriptions */
+  --text-200: oklch(18% 0.016 250);     /* Primary reading text */
+  --text-100: oklch(10% 0.018 250);     /* High-impact titles */
+
+  --brand-50: oklch(97% 0.02 230);
+  --brand-100: oklch(93% 0.06 230);
+  --brand-200: oklch(87% 0.11 230);
+  --brand-300: oklch(78% 0.16 230);
+  --brand-400: oklch(67% 0.20 230);
+  --brand-500: oklch(58% 0.22 230);
+  --brand-600: oklch(50% 0.20 230);
+  --brand-700: oklch(42% 0.17 230);
+  --brand-800: oklch(33% 0.13 230);
+  --brand-900: oklch(25% 0.09 230);
+
+  /* Status Colors */
+  --success-400: oklch(58% 0.18 150);
+  --success-500: oklch(50% 0.19 150);
+  --success-bg: oklch(94% 0.03 150);
+
+  --warning-400: oklch(68% 0.18 75);
+  --warning-500: oklch(60% 0.20 75);
+  --warning-bg: oklch(95% 0.03 75);
+
+  --danger-400: oklch(55% 0.20 25);
+  --danger-500: oklch(48% 0.22 25);
+  --danger-bg: oklch(94% 0.03 25);
+
+  --info-400: oklch(58% 0.15 260);
+  --info-500: oklch(50% 0.17 260);
+  --info-bg: oklch(94% 0.03 260);
+}
+
+.dark {
+  /* Premium Dark Mode design tokens (luxurious dark luxury linear dashboard) */
+  --bg-950: oklch(8% 0.015 250);
+  --bg-900: oklch(11% 0.018 250);
+  --bg-800: oklch(15% 0.020 250);
+  --bg-700: oklch(20% 0.020 250);
+  --border-600: oklch(28% 0.018 250);
+  --text-500: oklch(40% 0.016 250);
+  --text-400: oklch(55% 0.014 250);
+  --text-200: oklch(80% 0.008 250);
+  --text-100: oklch(93% 0.004 250);
+
+  --brand-50: oklch(20% 0.05 230);
+  --brand-100: oklch(24% 0.08 230);
+  --brand-200: oklch(28% 0.11 230);
+  --brand-300: oklch(35% 0.14 230);
+  --brand-400: oklch(45% 0.18 230);
+  --brand-500: oklch(58% 0.22 230);
+  --brand-600: oklch(67% 0.20 230);
+  --brand-700: oklch(78% 0.16 230);
+  --brand-800: oklch(87% 0.11 230);
+  --brand-900: oklch(95% 0.06 230);
+
+  /* Status Colors */
+  --success-400: oklch(72% 0.17 150);
+  --success-500: oklch(64% 0.19 150);
+  --success-bg: oklch(20% 0.05 150);
+
+  --warning-400: oklch(78% 0.18 75);
+  --warning-500: oklch(70% 0.20 75);
+  --warning-bg: oklch(20% 0.05 75);
+
+  --danger-400: oklch(65% 0.20 25);
+  --danger-500: oklch(57% 0.22 25);
+  --danger-bg: oklch(18% 0.05 25);
+
+  --info-400: oklch(72% 0.15 260);
+  --info-500: oklch(64% 0.17 260);
+  --info-bg: oklch(18% 0.05 260);
+}
+
 @theme {
   /* ── Brand Colors ─────────────────────── */
-  --color-brand-50: oklch(97% 0.02 230);
-  --color-brand-100: oklch(93% 0.06 230);
-  --color-brand-200: oklch(87% 0.11 230);
-  --color-brand-300: oklch(78% 0.16 230);
-  --color-brand-400: oklch(67% 0.20 230);
-  --color-brand-500: oklch(58% 0.22 230);
-  /* primary */
-  --color-brand-600: oklch(50% 0.20 230);
-  --color-brand-700: oklch(42% 0.17 230);
-  --color-brand-800: oklch(33% 0.13 230);
-  --color-brand-900: oklch(25% 0.09 230);
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-800: var(--brand-800);
+  --color-brand-900: var(--brand-900);
 
   /* ── Background / Surface ─────────────── */
-  --color-base-950: oklch(8% 0.015 250);
-  /* page bg */
-  --color-base-900: oklch(11% 0.018 250);
-  /* sidebar bg */
-  --color-base-800: oklch(15% 0.020 250);
-  /* card bg */
-  --color-base-700: oklch(20% 0.020 250);
-  /* elevated */
-  --color-base-600: oklch(28% 0.018 250);
-  /* border */
-  --color-base-500: oklch(40% 0.016 250);
-  /* muted text */
-  --color-base-400: oklch(55% 0.014 250);
-  /* secondary text */
-  --color-base-200: oklch(80% 0.008 250);
-  /* primary text */
-  --color-base-100: oklch(93% 0.004 250);
-  /* bright text */
+  --color-base-950: var(--bg-950);
+  --color-base-900: var(--bg-900);
+  --color-base-800: var(--bg-800);
+  --color-base-700: var(--bg-700);
+  --color-base-600: var(--border-600);
+  --color-base-500: var(--text-500);
+  --color-base-400: var(--text-400);
+  --color-base-200: var(--text-200);
+  --color-base-100: var(--text-100);
 
   /* ── Status Colors ────────────────────── */
-  --color-success-400: oklch(72% 0.17 150);
-  --color-success-500: oklch(64% 0.19 150);
-  --color-success-bg: oklch(20% 0.05 150);
+  --color-success-400: var(--success-400);
+  --color-success-500: var(--success-500);
+  --color-success-bg: var(--success-bg);
 
-  --color-warning-400: oklch(78% 0.18 75);
-  --color-warning-500: oklch(70% 0.20 75);
-  --color-warning-bg: oklch(20% 0.05 75);
+  --color-warning-400: var(--warning-400);
+  --color-warning-500: var(--warning-500);
+  --color-warning-bg: var(--warning-bg);
 
-  --color-danger-400: oklch(65% 0.20 25);
-  --color-danger-500: oklch(57% 0.22 25);
-  --color-danger-bg: oklch(18% 0.05 25);
+  --color-danger-400: var(--danger-400);
+  --color-danger-500: var(--danger-500);
+  --color-danger-bg: var(--danger-bg);
 
-  --color-info-400: oklch(72% 0.15 260);
-  --color-info-500: oklch(64% 0.17 260);
-  --color-info-bg: oklch(18% 0.05 260);
+  --color-info-400: var(--info-400);
+  --color-info-500: var(--info-500);
+  --color-info-bg: var(--info-bg);
 
   /* ── Typography ───────────────────────── */
   --font-sans: 'Inter', 'system-ui', sans-serif;
@@ -79,6 +151,8 @@ body {
   font-family: var(--font-sans);
   line-height: 1.6;
   min-height: 100vh;
+  /* Smooth theme transitions for background and text */
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* ── Scrollbar ─────────────────────────────────────── */
@@ -102,11 +176,20 @@ body {
 
 /* ── Glass Card ────────────────────────────────────── */
 .glass-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: var(--color-base-800);
+  border: 1px solid var(--color-base-600);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: var(--radius-card);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 4px 16px rgba(0, 0, 0, 0.06);
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dark .glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.3),
     0 4px 16px rgba(0, 0, 0, 0.2),
@@ -116,16 +199,24 @@ body {
 /* ── Stat Card ─────────────────────────────────────── */
 .stat-card {
   background: var(--color-base-800);
-  border: 1px solid var(--color-base-700);
+  border: 1px solid var(--color-base-600);
   border-radius: var(--radius-card);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  border-color: var(--color-base-500);
+}
+
+.dark .stat-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.dark .stat-card:hover {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-  border-color: var(--color-base-600);
 }
 
 /* ── Gradient Text ─────────────────────────────────── */
@@ -231,3 +322,23 @@ body {
     radial-gradient(ellipse 40% 40% at 80% 80%, oklch(20% 0.10 270 / 0.3) 0%, transparent 60%),
     var(--color-base-950);
 }
+
+/* ── Float animations ───────────────────────────────── */
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+@keyframes float-slow { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-16px) rotate(1deg)} }
+@keyframes float-delayed { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+.animate-float       { animation: float 4s ease-in-out infinite; }
+.animate-float-slow  { animation: float-slow 6s ease-in-out infinite; }
+.animate-float-delayed { animation: float-delayed 5s ease-in-out 1s infinite; }
+
+/* ── Glow pulse ─────────────────────────────────────── */
+@keyframes glow-pulse { 0%,100%{opacity:.4;transform:scale(1)} 50%{opacity:.7;transform:scale(1.08)} }
+.animate-glow-pulse { animation: glow-pulse 4s ease-in-out infinite; }
+
+/* ── Mesh drift ─────────────────────────────────────── */
+@keyframes mesh-drift { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(30px,-20px) scale(1.05)} 66%{transform:translate(-20px,15px) scale(.97)} }
+.animate-mesh { animation: mesh-drift 12s ease-in-out infinite; }
+
+/* ── Blink cursor ───────────────────────────────────── */
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+.animate-blink { animation: blink 1s step-end infinite; }

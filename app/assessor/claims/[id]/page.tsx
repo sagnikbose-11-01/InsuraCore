@@ -12,13 +12,15 @@ import { UserRole } from '@/lib/constants/enums';
 
 export const metadata: Metadata = { title: 'Assessor Claim Review' };
 
-export default async function AssessorClaimReviewPage({ params }: { params: { id: string } }) {
+export default async function AssessorClaimReviewPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session || session.role !== UserRole.ASSESSOR) redirect('/login');
 
+  const { id } = await params;
+
   const [claim, documents] = await Promise.all([
-    getClaimById(params.id),
-    getClaimDocuments(params.id),
+    getClaimById(id),
+    getClaimDocuments(id),
   ]);
 
   if (!claim) notFound();

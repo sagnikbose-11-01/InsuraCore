@@ -44,8 +44,13 @@ export async function getAllPolicies(activeOnly = false): Promise<SerializedPoli
 
 export async function getPolicyById(id: string): Promise<SerializedPolicy | null> {
   await connectDB();
-  const policy = await Policy.findById(id);
-  return policy ? serializePolicy(policy) : null;
+  try {
+    const policy = await Policy.findById(id);
+    return policy ? serializePolicy(policy) : null;
+  } catch {
+    // Invalid ObjectId format or other lookup error
+    return null;
+  }
 }
 
 // ---- Customer: Purchase Policies ----

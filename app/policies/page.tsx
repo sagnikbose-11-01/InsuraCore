@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getAllPolicies } from '@/services/policy.service';
-import { Shield, ShieldCheck, ArrowRight } from 'lucide-react';
+import { ShieldCheck, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/utils/formatters';
 import { PolicyType } from '@/lib/constants/enums';
@@ -29,7 +29,7 @@ export default async function PublicPoliciesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[var(--color-brand-500)] flex items-center justify-center glow-brand">
-              <Shield className="w-4 h-4 text-white" />
+              <span className="text-white font-black text-xs tracking-tight">IC</span>
             </div>
             <span className="font-bold text-lg text-[var(--color-base-100)] tracking-tight">
               InsuraCore

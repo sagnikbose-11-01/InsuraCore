@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Shield } from 'lucide-react';
 import { RegisterForm } from '@/components/forms/RegisterForm';
 
 export const metadata: Metadata = {
@@ -20,7 +19,7 @@ export default function RegisterPage() {
         <div className="glass-card p-8">
           <div className="flex flex-col items-center mb-8">
             <div className="w-12 h-12 rounded-2xl bg-[var(--color-brand-500)] flex items-center justify-center mb-4 glow-brand">
-              <Shield className="w-6 h-6 text-white" />
+              <span className="text-white font-black text-sm tracking-tight">IC</span>
             </div>
             <h1 className="text-2xl font-bold text-[var(--color-base-100)] tracking-tight">
               Create your account

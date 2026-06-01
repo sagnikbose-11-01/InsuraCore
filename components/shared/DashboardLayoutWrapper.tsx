@@ -7,8 +7,9 @@
 
 import React, { useState } from 'react';
 import { Sidebar } from './Sidebar';
-import { Menu, X, Shield } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { SerializedUser } from '@/types';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 interface Props {
   user: SerializedUser;
@@ -57,20 +58,23 @@ export function DashboardLayoutWrapper({ user, children }: Props) {
         <header className="flex items-center justify-between px-4 py-3 bg-[var(--color-base-900)] border-b border-[var(--color-base-800)] lg:hidden flex-shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-[var(--color-brand-500)] flex items-center justify-center glow-brand">
-              <Shield className="w-3.5 h-3.5 text-white" />
+              <span className="text-white font-black text-[10px] tracking-tight">IC</span>
             </div>
             <span className="font-bold text-sm text-[var(--color-base-100)] tracking-tight">
               InsuraCore
             </span>
           </div>
 
-          <button
-            onClick={() => setIsOpen(true)}
-            className="p-2 rounded-lg bg-[var(--color-base-800)] text-[var(--color-base-300)] hover:text-[var(--color-base-100)] border border-[var(--color-base-700)] focus:outline-none"
-            aria-label="Open navigation menu"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              onClick={() => setIsOpen(true)}
+              className="p-2 rounded-lg bg-[var(--color-base-800)] text-[var(--color-base-300)] hover:text-[var(--color-base-100)] border border-[var(--color-base-700)] focus:outline-none"
+              aria-label="Open navigation menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          </div>
         </header>
 
         {/* Scrollable container for dashboard child views */}
