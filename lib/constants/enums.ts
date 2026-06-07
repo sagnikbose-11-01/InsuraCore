@@ -44,3 +44,9 @@ export enum PolicyType {
   LIFE = 'LIFE',
   TRAVEL = 'TRAVEL',
 }
+
+export enum PriorityLevel {
+  HIGH = 'HIGH',
+  MEDIUM = 'MEDIUM',
+  LOW = 'LOW',
+}

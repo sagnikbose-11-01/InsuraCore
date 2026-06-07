@@ -25,6 +25,11 @@ export interface SerializedUser {
   phone: string;
   role: UserRole;
   avatar: string;
+  address?: string;
+  dob?: string;
+  employeeId?: string;
+  specialization?: string;
+  yearsOfExperience?: number;
   createdAt: string;
   updatedAt: string;
 }

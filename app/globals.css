@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   /* Premium Light Mode design tokens (soft enterprise SaaS workspace) */
   --bg-950: oklch(98% 0.005 250);       /* Page body bg */

@@ -10,6 +10,9 @@ import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
+import { JWTPayload } from '@/lib/auth/jwt';
+import { AuthAwareCTA } from '@/components/auth/AuthAwareCTA';
+import { UserNav } from '@/components/auth/UserNav';
 
 const NAV_ITEMS = [
   { label: 'Policies', href: '/policies' },
@@ -21,7 +24,7 @@ const NAV_ITEMS = [
   { label: 'FAQ', href: '#faq' },
 ];
 
-export function Navbar() {
+export function Navbar({ session }: { session: JWTPayload | null }) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
 
@@ -68,12 +71,11 @@ export function Navbar() {
         {/* Action Button & Theme selector */}
         <div className="hidden sm:flex items-center gap-3">
           <ThemeToggle />
-          <Link
-            href="/login"
-            className="inline-flex items-center justify-center text-xs font-bold bg-[var(--color-brand-500)] hover:bg-[var(--color-brand-600)] text-white px-5 py-2.5 rounded-xl transition-all shadow-[0_0_16px_oklch(58%_0.22_230_/_0.3)] hover:shadow-[0_0_24px_oklch(58%_0.22_230_/_0.55)] hover:-translate-y-0.5"
-          >
-            Access Portal
-          </Link>
+          {session ? (
+            <UserNav session={session} />
+          ) : (
+            <AuthAwareCTA session={session} icon={false} />
+          )}
         </div>
 
         {/* Mobile menu trigger */}
@@ -108,14 +110,12 @@ export function Navbar() {
                   {item.label}
                 </Link>
               ))}
-              <div className="pt-4 border-t border-[rgba(255,255,255,0.06)]">
-                <Link
-                  href="/login"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-center w-full bg-[var(--color-brand-500)] text-white font-bold py-3 rounded-xl text-xs"
-                >
-                  Access Portal
-                </Link>
+              <div className="pt-4 border-t border-[rgba(255,255,255,0.06)] flex flex-col gap-3 items-center">
+                {session ? (
+                  <UserNav session={session} />
+                ) : (
+                  <AuthAwareCTA session={session} icon={false} className="w-full py-3 text-center justify-center" />
+                )}
               </div>
             </div>
           </motion.div>

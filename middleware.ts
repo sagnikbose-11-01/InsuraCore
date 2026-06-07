@@ -20,13 +20,13 @@ import { UserRole } from '@/lib/constants/enums';
 
 // Route prefix → required roles mapping
 const PROTECTED_ROUTES: { prefix: string; roles: UserRole[] }[] = [
-  { prefix: '/dashboard', roles: [UserRole.CUSTOMER, UserRole.ADMIN] },
-  { prefix: '/assessor', roles: [UserRole.ASSESSOR, UserRole.ADMIN] },
+  { prefix: '/dashboard', roles: [UserRole.CUSTOMER] },
+  { prefix: '/assessor', roles: [UserRole.ASSESSOR] },
   { prefix: '/admin', roles: [UserRole.ADMIN] },
 ];
 
 // Public routes that should redirect authenticated users away
-const AUTH_ROUTES = ['/login', '/register'];
+const AUTH_ROUTES = ['/auth/login', '/auth/signup', '/auth/forgot-password', '/login', '/register'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -34,6 +34,20 @@ export async function middleware(request: NextRequest) {
 
   const jwtSecret = process.env.JWT_SECRET ?? '';
   const session = token ? await verifyTokenEdge(token, jwtSecret) : null;
+
+  // Transparent redirects for legacy auth paths
+  if (pathname === '/login') {
+    const loginUrl = new URL('/auth/login', request.url);
+    const callbackUrl = request.nextUrl.searchParams.get('callbackUrl');
+    if (callbackUrl) {
+      loginUrl.searchParams.set('callbackUrl', callbackUrl);
+    }
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (pathname === '/register') {
+    return NextResponse.redirect(new URL('/auth/signup', request.url));
+  }
 
   // Redirect authenticated users away from auth pages
   if (AUTH_ROUTES.some((route) => pathname.startsWith(route))) {
@@ -50,7 +64,7 @@ export async function middleware(request: NextRequest) {
   if (matchedRoute) {
     // Not logged in → redirect to login
     if (!session) {
-      const loginUrl = new URL('/login', request.url);
+      const loginUrl = new URL('/auth/login', request.url);
       loginUrl.searchParams.set('callbackUrl', pathname);
       return NextResponse.redirect(loginUrl);
     }
@@ -78,5 +92,5 @@ function getRoleRedirect(role: UserRole): string {
 
 export const config = {
   // Run middleware on protected routes and auth pages only
-  matcher: ['/dashboard/:path*', '/assessor/:path*', '/admin/:path*', '/login', '/register'],
+  matcher: ['/dashboard/:path*', '/assessor/:path*', '/admin/:path*', '/login', '/register', '/auth/:path*'],
 };

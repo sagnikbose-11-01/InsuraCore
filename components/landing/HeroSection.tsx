@@ -10,8 +10,11 @@ import React from 'react';
 import Link from 'next/link';
 import { ShieldCheck, ArrowRight, ChevronRight, Star, Sparkles, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { JWTPayload } from '@/lib/auth/jwt';
+import { AuthAwareCTA } from '@/components/auth/AuthAwareCTA';
+import { UserRole } from '@/lib/constants/enums';
 
-export function HeroSection() {
+export function HeroSection({ session }: { session: JWTPayload | null }) {
   return (
     <section className="relative overflow-hidden pt-12 pb-24 lg:py-32">
       {/* Animated gradient mesh & glowing orbs */}
@@ -26,15 +29,27 @@ export function HeroSection() {
           {/* LEFT: Copy & Badges */}
           <div className="lg:col-span-6 text-left space-y-6">
             {/* Glowing Pill Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[oklch(18%_0.08_230)] border border-[oklch(28%_0.10_230)] text-[oklch(72%_0.20_230)] text-xs font-semibold"
-            >
-              <Star className="w-3.5 h-3.5 fill-[oklch(72%_0.20_230)]" />
-              Claims Management for the AI Era
-            </motion.div>
+            {session ? (
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[oklch(18%_0.08_230)] border border-[oklch(28%_0.10_230)] text-[oklch(72%_0.20_230)] text-xs font-semibold"
+              >
+                <Sparkles className="w-3.5 h-3.5 fill-[oklch(72%_0.20_230)] text-[oklch(72%_0.20_230)]" />
+                Welcome back, {session.role === UserRole.ADMIN ? `Admin ${session.name.split(' ')[0]}` : session.name.split(' ')[0]} 👋
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[oklch(18%_0.08_230)] border border-[oklch(28%_0.10_230)] text-[oklch(72%_0.20_230)] text-xs font-semibold"
+              >
+                <Star className="w-3.5 h-3.5 fill-[oklch(72%_0.20_230)]" />
+                Claims Management for the AI Era
+              </motion.div>
+            )}
 
             {/* Headline */}
             <motion.h1
@@ -66,18 +81,37 @@ export function HeroSection() {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="flex flex-wrap gap-4 pt-2"
             >
-              <Link
-                href="/register"
-                className="inline-flex items-center gap-2 bg-[var(--color-brand-500)] hover:bg-[var(--color-brand-400)] text-white font-semibold px-7 py-3.5 rounded-xl text-sm transition-all shadow-[0_0_24px_oklch(58%_0.22_230_/_0.3)] hover:shadow-[0_0_36px_oklch(58%_0.22_230_/_0.5)] hover:-translate-y-0.5"
-              >
-                Access Portal <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link
-                href="/policies"
-                className="inline-flex items-center gap-2 bg-[var(--color-base-900)] hover:bg-[var(--color-base-800)] text-[var(--color-base-200)] font-semibold px-7 py-3.5 rounded-xl text-sm border border-[var(--color-base-800)] hover:border-[var(--color-base-700)] transition-all hover:-translate-y-0.5"
-              >
-                Browse Policies <ChevronRight className="w-4 h-4" />
-              </Link>
+              <AuthAwareCTA session={session} className="px-7 py-3.5 text-sm" />
+              
+              {!session ? (
+                <Link
+                  href="/policies"
+                  className="inline-flex items-center gap-2 bg-[var(--color-base-900)] hover:bg-[var(--color-base-800)] text-[var(--color-base-200)] font-semibold px-7 py-3.5 rounded-xl text-sm border border-[var(--color-base-800)] hover:border-[var(--color-base-700)] transition-all hover:-translate-y-0.5"
+                >
+                  Browse Policies <ChevronRight className="w-4 h-4" />
+                </Link>
+              ) : session.role === UserRole.CUSTOMER ? (
+                <Link
+                  href="/policies"
+                  className="inline-flex items-center gap-2 bg-[var(--color-base-900)] hover:bg-[var(--color-base-800)] text-[var(--color-base-200)] font-semibold px-7 py-3.5 rounded-xl text-sm border border-[var(--color-base-800)] hover:border-[var(--color-base-700)] transition-all hover:-translate-y-0.5"
+                >
+                  View My Policies <ChevronRight className="w-4 h-4" />
+                </Link>
+              ) : session.role === UserRole.ASSESSOR ? (
+                <Link
+                  href="/assessor/claims"
+                  className="inline-flex items-center gap-2 bg-[var(--color-base-900)] hover:bg-[var(--color-base-800)] text-[var(--color-base-200)] font-semibold px-7 py-3.5 rounded-xl text-sm border border-[var(--color-base-800)] hover:border-[var(--color-base-700)] transition-all hover:-translate-y-0.5"
+                >
+                  Review Claims <ChevronRight className="w-4 h-4" />
+                </Link>
+              ) : (
+                <Link
+                  href="/admin/analytics"
+                  className="inline-flex items-center gap-2 bg-[var(--color-base-900)] hover:bg-[var(--color-base-800)] text-[var(--color-base-200)] font-semibold px-7 py-3.5 rounded-xl text-sm border border-[var(--color-base-800)] hover:border-[var(--color-base-700)] transition-all hover:-translate-y-0.5"
+                >
+                  View Analytics <ChevronRight className="w-4 h-4" />
+                </Link>
+              )}
             </motion.div>
 
             {/* Trust indicators */}

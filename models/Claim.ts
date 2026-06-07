@@ -6,7 +6,7 @@
 // ============================================================
 
 import mongoose, { Schema, Document, Model } from 'mongoose';
-import { ClaimStatus } from '@/lib/constants/enums';
+import { ClaimStatus, PolicyType, PriorityLevel } from '@/lib/constants/enums';
 
 export interface IClaim extends Document {
   purchasedPolicyId: mongoose.Types.ObjectId;
@@ -18,6 +18,13 @@ export interface IClaim extends Document {
   approvedAmount: number;
   assignedAssessorId: mongoose.Types.ObjectId | null;
   status: ClaimStatus;
+  
+  // New enterprise workflow fields
+  policyType: PolicyType;
+  priority: PriorityLevel;
+  riskScore: number;
+  fraudFlags: string[];
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -54,6 +61,20 @@ const ClaimSchema = new Schema<IClaim>(
       default: ClaimStatus.PENDING,
       index: true,
     },
+    policyType: {
+      type: String,
+      enum: Object.values(PolicyType),
+      required: true,
+      index: true, // Crucial for filtering by assessor specialization
+    },
+    priority: {
+      type: String,
+      enum: Object.values(PriorityLevel),
+      default: PriorityLevel.MEDIUM,
+      index: true,
+    },
+    riskScore: { type: Number, default: 0, min: 0, max: 100 },
+    fraudFlags: { type: [String], default: [] },
   },
   { timestamps: true }
 );
@@ -61,6 +82,7 @@ const ClaimSchema = new Schema<IClaim>(
 // Compound indexes for common query patterns
 ClaimSchema.index({ customerId: 1, status: 1 });
 ClaimSchema.index({ assignedAssessorId: 1, status: 1 });
+ClaimSchema.index({ policyType: 1, status: 1 }); // For Assessor unassigned queues
 
 const Claim: Model<IClaim> = mongoose.models.Claim ?? mongoose.model<IClaim>('Claim', ClaimSchema);
 export default Claim;

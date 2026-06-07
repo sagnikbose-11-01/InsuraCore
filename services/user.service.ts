@@ -10,16 +10,49 @@ import { connectDB } from '@/lib/db/mongoose';
 import User, { IUser } from '@/models/User';
 import { signToken } from '@/lib/auth/jwt';
 import { RegisterInput, LoginInput } from '@/lib/validators/auth.validators';
-import { UserRole } from '@/lib/constants/enums';
+import { UserRole, PolicyType } from '@/lib/constants/enums';
 import { SerializedUser } from '@/types';
 import Notification from '@/models/Notification';
 
 const SALT_ROUNDS = 12;
 
 export async function registerUser(
-  input: RegisterInput
+  input: {
+    name: string;
+    email: string;
+    password: string;
+    phone?: string;
+    role?: UserRole;
+    address?: string;
+    dob?: string;
+    employeeId?: string;
+    specialization?: PolicyType;
+    yearsOfExperience?: number;
+    adminAccessCode?: string;
+  }
 ): Promise<{ token: string; user: SerializedUser }> {
   await connectDB();
+
+  // Enforce server-side rules per role
+  const role = input.role ?? UserRole.CUSTOMER;
+  const localPart = input.email.split('@')[0];
+
+  if (role === UserRole.ASSESSOR) {
+    if (!localPart.startsWith('assessor')) {
+      throw new Error('Invalid assessor registration information.');
+    }
+    if (!input.employeeId || !input.specialization || input.yearsOfExperience === undefined) {
+      throw new Error('Invalid assessor registration information.');
+    }
+  } else if (role === UserRole.ADMIN) {
+    if (!localPart.startsWith('admin')) {
+      throw new Error('Unauthorized admin registration attempt.');
+    }
+    const envCode = process.env.ADMIN_INVITE_CODE || 'INSURACORE_ADMIN_2026';
+    if (!input.adminAccessCode || input.adminAccessCode !== envCode) {
+      throw new Error('Unauthorized admin registration attempt.');
+    }
+  }
 
   const existing = await User.findOne({ email: input.email });
   if (existing) {
@@ -32,8 +65,13 @@ export async function registerUser(
     name: input.name,
     email: input.email,
     password: hashedPassword,
-    phone: input.phone,
-    role: input.role ?? UserRole.CUSTOMER,
+    phone: input.phone || 'N/A', // fallback for admin
+    role: role,
+    address: input.address,
+    dob: input.dob ? new Date(input.dob) : undefined,
+    employeeId: input.employeeId,
+    specialization: input.specialization,
+    yearsOfExperience: input.yearsOfExperience,
   });
 
   // Welcome notification
@@ -47,6 +85,7 @@ export async function registerUser(
     email: user.email,
     role: user.role,
     name: user.name,
+    specialization: user.specialization as PolicyType,
   });
 
   return { token, user: serializeUser(user) };
@@ -73,6 +112,7 @@ export async function loginUser(
     email: user.email,
     role: user.role,
     name: user.name,
+    specialization: user.specialization as PolicyType,
   });
 
   return { token, user: serializeUser(user) };
@@ -115,6 +155,11 @@ function serializeUser(user: IUser): SerializedUser {
     phone: user.phone,
     role: user.role,
     avatar: user.avatar,
+    address: user.address,
+    dob: user.dob ? user.dob.toISOString() : undefined,
+    employeeId: user.employeeId,
+    specialization: user.specialization,
+    yearsOfExperience: user.yearsOfExperience,
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString(),
   };

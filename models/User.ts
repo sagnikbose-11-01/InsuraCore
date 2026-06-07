@@ -5,7 +5,7 @@
 // ============================================================
 
 import mongoose, { Schema, Document, Model } from 'mongoose';
-import { UserRole } from '@/lib/constants/enums';
+import { UserRole, PolicyType } from '@/lib/constants/enums';
 
 export interface IUser extends Document {
   name: string;
@@ -14,6 +14,13 @@ export interface IUser extends Document {
   phone: string;
   role: UserRole;
   avatar: string;
+  // Customer onboarding fields
+  address?: string;
+  dob?: Date;
+  // Assessor/Admin onboarding fields
+  employeeId?: string;
+  specialization?: PolicyType;
+  yearsOfExperience?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,6 +45,16 @@ const UserSchema = new Schema<IUser>(
       index: true,
     },
     avatar: { type: String, default: '' },
+    // Onboarding fields
+    address: { type: String, trim: true },
+    dob: { type: Date },
+    employeeId: { type: String, trim: true },
+    specialization: { 
+      type: String, 
+      enum: Object.values(PolicyType),
+      index: true 
+    },
+    yearsOfExperience: { type: Number },
   },
   {
     timestamps: true,

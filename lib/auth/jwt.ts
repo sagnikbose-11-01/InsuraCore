@@ -5,7 +5,7 @@
 // ============================================================
 
 import jwt from 'jsonwebtoken';
-import { UserRole } from '@/lib/constants/enums';
+import { UserRole, PolicyType } from '@/lib/constants/enums';
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
@@ -18,6 +18,7 @@ export interface JWTPayload {
   email: string;
   role: UserRole;
   name: string;
+  specialization?: PolicyType;
 }
 
 // Sign a JWT with 7-day expiry

@@ -13,6 +13,8 @@ export interface IClaimAssessment extends Document {
   remarks: string;
   approvedAmount: number;
   assessmentDate: Date;
+  reviewStartedAt?: Date;
+  reviewCompletedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,6 +36,8 @@ const ClaimAssessmentSchema = new Schema<IClaimAssessment>(
     remarks: { type: String, required: true },
     approvedAmount: { type: Number, required: true, min: 0 },
     assessmentDate: { type: Date, default: Date.now },
+    reviewStartedAt: { type: Date },
+    reviewCompletedAt: { type: Date },
   },
   { timestamps: true }
 );

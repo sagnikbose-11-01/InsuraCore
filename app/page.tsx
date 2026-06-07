@@ -16,6 +16,7 @@ import { Testimonials } from '@/components/landing/Testimonials';
 import { AccordionFAQ } from '@/components/landing/AccordionFAQ';
 import { FinalCTA } from '@/components/landing/FinalCTA';
 import { Footer } from '@/components/landing/Footer';
+import { getSession } from '@/lib/auth/session';
 
 export const metadata: Metadata = {
   title: 'InsuraCore — Enterprise Insurance Claim Platform',
@@ -23,14 +24,16 @@ export const metadata: Metadata = {
     'InsuraCore is a modern insurance claim management platform. Purchase policies, file claims instantly, and track settlements in real time.',
 };
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const session = await getSession();
+
   return (
     <div className="min-h-screen bg-[var(--color-base-950)] text-[var(--color-base-200)] scroll-smooth overflow-x-hidden selection:bg-[oklch(58%_0.22_230_/_0.3)] selection:text-white">
       {/* Premium sticky glassmorphic navigation bar */}
-      <Navbar />
+      <Navbar session={session} />
 
       {/* Hero section containing living dashboard mockup */}
-      <HeroSection />
+      <HeroSection session={session} />
 
       {/* Metric showcase with animated number counters */}
       <StatsSection />

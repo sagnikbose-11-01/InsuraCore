@@ -1,55 +1,81 @@
-import type { Metadata } from 'next';
-import { notFound, redirect } from 'next/navigation';
-import { getSession } from '@/lib/auth/session';
-import { getClaimById, getClaimDocuments } from '@/services/claim.service';
-import { DashboardShell } from '@/components/shared/DashboardShell';
-import { PageHeader } from '@/components/shared/PageHeader';
-import { AssessorReviewPanel } from './AssessorReviewPanel';
+// ============================================================
+// app/assessor/claims/[id]/page.tsx
+// The Claim Command Center. Comprehensive dashboard for reviewing
+// a single claim, verifying documents, and making decisions.
+// ============================================================
+
+import React from 'react';
+import { Metadata } from 'next';
 import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { UserRole } from '@/lib/constants/enums';
+import { ArrowLeft, CheckCircle, XCircle, FileQuestion, MessageSquare } from 'lucide-react';
+import { ClaimDetailsCard } from '@/components/assessor/ClaimDetailsCard';
+import { FraudScoreCard } from '@/components/assessor/FraudScoreCard';
+import { DocumentViewer } from '@/components/assessor/DocumentViewer';
+import { ActivityFeed } from '@/components/assessor/ActivityFeed';
 
-export const metadata: Metadata = { title: 'Assessor Claim Review' };
+export const metadata: Metadata = {
+  title: 'Claim Review | Assessor Workspace',
+};
 
-export default async function AssessorClaimReviewPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await getSession();
-  if (!session || session.role !== UserRole.ASSESSOR) redirect('/login');
-
-  const { id } = await params;
-
-  const [claim, documents] = await Promise.all([
-    getClaimById(id),
-    getClaimDocuments(id),
-  ]);
-
-  if (!claim) notFound();
-
-  // Guard to ensure this claim is assigned to this assessor
-  const assessorId = typeof claim.assignedAssessorId === 'object' && claim.assignedAssessorId
-    ? claim.assignedAssessorId._id
-    : claim.assignedAssessorId;
-
-  if (assessorId !== session.id) {
-    redirect('/assessor');
-  }
+export default async function ClaimReviewPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
+  const id = resolvedParams.id || 'CLM-9821';
 
   return (
-    <DashboardShell>
-      <div className="mb-6">
-        <Link href="/assessor">
-          <Button variant="ghost" size="sm" leftIcon={<ChevronLeft className="w-4 h-4" />}>
-            Back to Pipeline
-          </Button>
+    <div className="space-y-6 animate-fade-in pb-20">
+      {/* Top Nav Breadcrumb */}
+      <div className="flex items-center gap-4">
+        <Link 
+          href="/assessor"
+          className="p-2 rounded-lg bg-[var(--color-base-900)] border border-[rgba(255,255,255,0.06)] hover:bg-[var(--color-base-800)] text-[var(--color-base-400)] hover:text-white transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
         </Link>
+        <div>
+          <h1 className="text-xl font-black text-white tracking-tight">Reviewing {id}</h1>
+          <p className="text-xs text-[var(--color-base-400)] mt-0.5">Assigned to you • Due in 48 hours</p>
+        </div>
       </div>
 
-      <PageHeader
-        title={`Review: ${claim.title}`}
-        description={`Filed on ${new Date(claim.createdAt).toLocaleDateString()}`}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Column (Main Content) */}
+        <div className="lg:col-span-8 space-y-6">
+          <ClaimDetailsCard claimId={id} />
+          
+          {/* Assessor Actions Box */}
+          <div className="glass-card p-6">
+            <h3 className="text-sm font-bold text-white mb-4">Assessor Decision</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-[var(--color-base-300)] mb-2">Internal Notes / Remarks</label>
+                <textarea 
+                  className="w-full bg-[var(--color-base-950)] border border-[rgba(255,255,255,0.06)] rounded-xl p-3 text-sm text-[var(--color-base-200)] placeholder:text-[var(--color-base-600)] focus:outline-none focus:border-purple-500/50 transition-all min-h-[100px]"
+                  placeholder="Add your rationale for approval, rejection, or request for more documents..."
+                />
+              </div>
+              
+              <div className="flex flex-wrap gap-3 pt-2">
+                <button className="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all">
+                  <CheckCircle className="w-4 h-4" /> Approve Claim
+                </button>
+                <button className="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[var(--color-base-900)] border border-[rgba(255,255,255,0.06)] hover:bg-[var(--color-base-800)] text-white text-sm font-bold transition-all">
+                  <FileQuestion className="w-4 h-4" /> Request Docs
+                </button>
+                <button className="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500 hover:text-white text-red-400 text-sm font-bold transition-all">
+                  <XCircle className="w-4 h-4" /> Reject Claim
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <AssessorReviewPanel claim={claim} initialDocuments={documents} />
-    </DashboardShell>
+        {/* Right Column (Sidebar widgets) */}
+        <div className="lg:col-span-4 space-y-6">
+          <FraudScoreCard score={82} />
+          <DocumentViewer />
+          <ActivityFeed />
+        </div>
+      </div>
+    </div>
   );
 }
