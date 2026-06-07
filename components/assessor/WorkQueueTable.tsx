@@ -70,7 +70,7 @@ export function WorkQueueTable({ claims, assessorId }: Props) {
       const res = await startClaimReviewAction(claimId);
       if (res.success) {
         toast.success('Assigned and moved to Under Review');
-        router.push(`/assessor/reviews?claimId=${claimId}`);
+        router.push(`/assessor/review/${claimId}`);
       } else {
         toast.error(res.message || 'Failed to start review');
       }
@@ -249,7 +249,7 @@ export function WorkQueueTable({ claims, assessorId }: Props) {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => router.push(`/assessor/reviews?claimId=${claim._id}`)}
+                                onClick={() => router.push(`/assessor/review/${claim._id}`)}
                                 leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
                               >
                                 Continue

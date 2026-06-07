@@ -46,7 +46,8 @@ export function AssessorSidebar() {
       {/* Navigation */}
       <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
         {NAV_LINKS.map((link) => {
-          const isActive = pathname === link.href;
+          const isActive = pathname === link.href || 
+            (link.href === '/assessor/reviews' && pathname.startsWith('/assessor/review'));
           const Icon = link.icon;
 
           return (

@@ -27,7 +27,7 @@ import {
 import { 
   User, Shield, Clipboard, FileText, CheckCircle, XCircle, 
   Clock, AlertTriangle, AlertCircle, Plus, Send, Lock, Eye, 
-  Check, FileQuestion, ChevronRight, HelpCircle, Activity, X 
+  Check, FileQuestion, ChevronRight, HelpCircle, Activity, X, ShieldAlert 
 } from 'lucide-react';
 
 interface Props {

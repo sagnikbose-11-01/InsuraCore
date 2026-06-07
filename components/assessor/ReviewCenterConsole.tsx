@@ -99,7 +99,7 @@ export function ReviewCenterConsole({ claims, selectedClaim, documents, previous
               return (
                 <div
                   key={c._id}
-                  onClick={() => router.push(`/assessor/reviews?claimId=${c._id}`)}
+                  onClick={() => router.push(`/assessor/review/${c._id}`)}
                   className={cn(
                     "p-3 rounded-xl border transition-all duration-200 cursor-pointer flex gap-3 text-left relative",
                     isSelected 

@@ -14,6 +14,7 @@ import ClaimAssessment from '@/models/ClaimAssessment';
 import Notification from '@/models/Notification';
 import Policy from '@/models/Policy';
 import PurchasedPolicy from '@/models/PurchasedPolicy';
+import ClaimAuditLog from '@/models/ClaimAuditLog';
 import { CreateClaimInput, AssessmentInput, AssignAssessorInput } from '@/lib/validators/claim.validators';
 import { ClaimStatus, DocumentStatus, PolicyType } from '@/lib/constants/enums';
 import { SerializedClaim, SerializedClaimDocument, SerializedClaimAssessment, ClaimsAnalytics } from '@/types';
@@ -88,6 +89,20 @@ export async function addClaimDocument(
 ): Promise<SerializedClaimDocument> {
   await connectDB();
   const doc = await ClaimDocument.create({ claimId, documentName, documentUrl });
+  
+  const claim = await Claim.findById(claimId).select('customerId status');
+  if (claim) {
+    await logClaimAudit(
+      claimId,
+      null,
+      claim.customerId.toString(),
+      'CUSTOMER_RESPONDED',
+      `Uploaded document: ${documentName}`,
+      claim.status,
+      claim.status
+    );
+  }
+  
   return serializeDocument(doc);
 }
 
@@ -184,6 +199,27 @@ async function ensureClaimPolicyType(claim: IClaim) {
   }
 }
 
+async function logClaimAudit(
+  claimId: string,
+  assessorId: string | null,
+  customerId: string,
+  action: 'REVIEW_STARTED' | 'DOCUMENT_REQUESTED' | 'NOTE_ADDED' | 'APPROVED' | 'REJECTED' | 'ESCALATED' | 'CUSTOMER_RESPONDED',
+  remarks = '',
+  previousStatus = '',
+  newStatus = ''
+) {
+  await connectDB();
+  await ClaimAuditLog.create({
+    claimId: new mongoose.Types.ObjectId(claimId),
+    assessorId: assessorId ? new mongoose.Types.ObjectId(assessorId) : null,
+    customerId: new mongoose.Types.ObjectId(customerId),
+    action,
+    remarks,
+    previousStatus,
+    newStatus,
+  });
+}
+
 export async function startClaimReview(claimId: string, assessorId: string): Promise<SerializedClaim> {
   await connectDB();
   const assessor = await User.findById(assessorId).select('name');
@@ -192,6 +228,7 @@ export async function startClaimReview(claimId: string, assessorId: string): Pro
   const claim = await Claim.findById(claimId);
   if (!claim) throw new Error('Claim not found');
 
+  const previousStatus = claim.status;
   claim.assignedAssessorId = new mongoose.Types.ObjectId(assessorId);
   claim.status = ClaimStatus.UNDER_REVIEW;
   
@@ -216,6 +253,16 @@ export async function startClaimReview(claimId: string, assessorId: string): Pro
     reviewStartedAt: new Date(),
   });
 
+  await logClaimAudit(
+    claimId,
+    assessorId,
+    claim.customerId.toString(),
+    'REVIEW_STARTED',
+    'Claim review started. Status set to Under Review.',
+    previousStatus,
+    ClaimStatus.UNDER_REVIEW
+  );
+
   return serializeClaim(claim);
 }
 
@@ -235,6 +282,7 @@ export async function requestClaimDocuments(
   });
   if (!claim) throw new Error('Claim not found');
 
+  const previousStatus = claim.status;
   claim.status = ClaimStatus.DOCUMENT_VERIFICATION;
   
   const text = `Requested additional documents: ${requestedDocs.join(', ')}. Remarks: ${remarks}`;
@@ -258,20 +306,35 @@ export async function requestClaimDocuments(
     approvedAmount: 0,
   });
 
-  const policyName = (claim.purchasedPolicyId as any)?.policyId?.name || 'your policy';
   const claimRef = `INS-${claim._id.toString().slice(-8).toUpperCase()}`;
+  const policyType = claim.policyType || 'General';
+  const notificationMsg = `Your ${policyType} claim ${claimRef} ("${claim.title}") requires additional documents: ${requestedDocs.join(', ')}. Requested by Assessor ${assessor.name}.`;
 
   await Notification.create({
     userId: claim.customerId,
     title: 'Additional Documents Required',
-    message: `Your claim ${claimRef} under ${policyName} requires additional documents: ${requestedDocs.join(', ')}.`,
+    message: notificationMsg,
     claimId: claim._id,
     metadata: {
       type: 'REQUEST_DOCUMENTS',
       requestedDocuments: requestedDocs,
-      assessorRemarks: remarks
+      assessorRemarks: remarks,
+      claimId: claim._id.toString(),
+      claimTitle: claim.title,
+      assessorName: assessor.name,
+      timestamp: new Date().toISOString()
     }
   });
+
+  await logClaimAudit(
+    claimId,
+    assessorId,
+    claim.customerId.toString(),
+    'DOCUMENT_REQUESTED',
+    text,
+    previousStatus,
+    ClaimStatus.DOCUMENT_VERIFICATION
+  );
 
   return serializeClaim(claim);
 }
@@ -303,17 +366,33 @@ export async function addClaimNote(
 
   if (!isInternal) {
     const claimRef = `INS-${claim._id.toString().slice(-8).toUpperCase()}`;
+    const policyType = claim.policyType || 'General';
+    const notificationMsg = `New assessor note added to your ${policyType} claim ${claimRef} ("${claim.title}") by Assessor ${assessor.name}.`;
     await Notification.create({
       userId: claim.customerId,
       title: 'New Assessor Note',
-      message: `Assessor ${assessor.name} added a note to your claim ${claimRef}.`,
+      message: notificationMsg,
       claimId: claim._id,
       metadata: {
         type: 'ADD_NOTES',
-        assessorRemarks: text
+        assessorRemarks: text,
+        claimId: claim._id.toString(),
+        claimTitle: claim.title,
+        assessorName: assessor.name,
+        timestamp: new Date().toISOString()
       }
     });
   }
+
+  await logClaimAudit(
+    claimId,
+    assessorId,
+    claim.customerId.toString(),
+    'NOTE_ADDED',
+    isInternal ? `Internal note added: ${text}` : `Customer-facing note added: ${text}`,
+    claim.status,
+    claim.status
+  );
 
   return serializeClaim(claim);
 }
@@ -336,6 +415,7 @@ export async function submitClaimDecision(
   });
   if (!claim) throw new Error('Claim not found');
 
+  const previousStatus = claim.status;
   const newStatus = decision === 'APPROVED' ? ClaimStatus.APPROVED : ClaimStatus.REJECTED;
   claim.status = newStatus;
   claim.approvedAmount = decision === 'APPROVED' ? approvedAmount : 0;
@@ -380,34 +460,54 @@ export async function submitClaimDecision(
     });
   }
 
-  const policyName = (claim.purchasedPolicyId as any)?.policyId?.name || 'your policy';
   const claimRef = `INS-${claim._id.toString().slice(-8).toUpperCase()}`;
+  const policyType = claim.policyType || 'General';
 
   if (decision === 'APPROVED') {
+    const notificationMsg = `Your ${policyType} claim ${claimRef} ("${claim.title}") has been approved by Assessor ${assessor.name}.`;
     await Notification.create({
       userId: claim.customerId,
       title: 'Claim Approved',
-      message: `Your claim for ₹${approvedAmount.toLocaleString('en-IN')} under ${policyName} has been approved.`,
+      message: notificationMsg,
       claimId: claim._id,
       metadata: {
         type: 'APPROVE',
         approvedAmount: approvedAmount,
-        assessorRemarks: customerRemarks
+        assessorRemarks: customerRemarks,
+        claimId: claim._id.toString(),
+        claimTitle: claim.title,
+        assessorName: assessor.name,
+        timestamp: new Date().toISOString()
       }
     });
   } else {
+    const notificationMsg = `Your ${policyType} claim ${claimRef} ("${claim.title}") has been rejected by Assessor ${assessor.name}.`;
     await Notification.create({
       userId: claim.customerId,
       title: 'Claim Rejected',
-      message: `Your claim ${claimRef} under ${policyName} has been rejected.`,
+      message: notificationMsg,
       claimId: claim._id,
       metadata: {
         type: 'REJECT',
         rejectionReason: customerRemarks,
-        assessorRemarks: customerRemarks
+        assessorRemarks: customerRemarks,
+        claimId: claim._id.toString(),
+        claimTitle: claim.title,
+        assessorName: assessor.name,
+        timestamp: new Date().toISOString()
       }
     });
   }
+
+  await logClaimAudit(
+    claimId,
+    assessorId,
+    claim.customerId.toString(),
+    decision,
+    `Remarks: ${customerRemarks}`,
+    previousStatus,
+    newStatus
+  );
 
   return serializeClaim(claim);
 }

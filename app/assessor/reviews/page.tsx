@@ -7,8 +7,7 @@ import React from 'react';
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/session';
-import { getAssessorReviewQueue, getAssessorClaimDetail } from '@/services/assessor.service';
-import { getClaimDocuments, getMyClaimsWithDetails, getClaimAssessments } from '@/services/claim.service';
+import { getAssessorReviewQueue } from '@/services/assessor.service';
 import { ReviewCenterConsole } from '@/components/assessor/ReviewCenterConsole';
 import { CheckSquare } from 'lucide-react';
 
@@ -16,55 +15,15 @@ export const metadata: Metadata = {
   title: 'Review Center | Assessor Workspace',
 };
 
-interface SearchParams {
-  claimId?: string;
-  search?: string;
-  status?: string;
-}
-
-export default async function ReviewsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-}) {
+export default async function ReviewsPage() {
   const session = await getSession();
   if (!session) redirect('/auth/login');
 
-  const resolvedParams = await searchParams;
-  const claimId = typeof resolvedParams.claimId === 'string' ? resolvedParams.claimId : undefined;
-  const search = typeof resolvedParams.search === 'string' ? resolvedParams.search : '';
-  const status = typeof resolvedParams.status === 'string' ? resolvedParams.status : 'all';
-
-  // 1. Fetch claims matching filters under their specialization
-  const claims = await getAssessorReviewQueue(session.id, { search, status });
-
-  // 2. Fetch specific claim data if a claim is selected
-  let selectedClaim = null;
-  let documents: any[] = [];
-  let previousClaims: any[] = [];
-  let assessments: any[] = [];
-
-  if (claimId) {
-    try {
-      selectedClaim = await getAssessorClaimDetail(session.id, claimId);
-      if (selectedClaim) {
-        // Fetch documents
-        documents = await getClaimDocuments(claimId);
-        
-        // Fetch assessments history
-        assessments = await getClaimAssessments(claimId);
-        
-        // Fetch previous claims for the same customer
-        const customerId = selectedClaim.customerId?._id?.toString() || selectedClaim.customerId?.toString();
-        if (customerId) {
-          const customerClaims = await getMyClaimsWithDetails(customerId);
-          previousClaims = customerClaims.filter(c => c._id !== claimId);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading selected claim:', error);
-      // Fallback or do nothing (shows blank state on invalid claimId)
-    }
+  // Fetch claims in their specialization
+  const claims = await getAssessorReviewQueue(session.id);
+  
+  if (claims.length > 0) {
+    redirect(`/assessor/review/${claims[0]._id}`);
   }
 
   return (
@@ -81,13 +40,13 @@ export default async function ReviewsPage({
         </div>
       </div>
 
-      {/* Split Console */}
+      {/* Split Console with empty selected state */}
       <ReviewCenterConsole 
         claims={claims} 
-        selectedClaim={selectedClaim} 
-        documents={documents} 
-        previousClaims={previousClaims} 
-        assessments={assessments}
+        selectedClaim={null} 
+        documents={[]} 
+        previousClaims={[]} 
+        assessments={[]}
       />
     </div>
   );

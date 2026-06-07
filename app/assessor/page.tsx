@@ -60,7 +60,7 @@ export default async function AssessorDashboard() {
   ) || activeClaims[0];
 
   const nextClaimLink = nextClaim 
-    ? `/assessor/reviews?claimId=${nextClaim._id}` 
+    ? `/assessor/review/${nextClaim._id}` 
     : '/assessor/reviews';
 
   // Workload Message
@@ -186,7 +186,7 @@ export default async function AssessorDashboard() {
                         <span className="text-sm font-semibold text-white">{c.title} ({formatCurrency(c.claimAmount)})</span>
                       </div>
                     </div>
-                    <Link href={`/assessor/reviews?claimId=${c._id}`} className="p-2 rounded-lg bg-[var(--color-base-900)] border border-[rgba(255,255,255,0.06)] hover:bg-[var(--color-base-800)] text-[var(--color-base-300)] hover:text-white text-xs font-bold transition-all">
+                    <Link href={`/assessor/review/${c._id}`} className="p-2 rounded-lg bg-[var(--color-base-900)] border border-[rgba(255,255,255,0.06)] hover:bg-[var(--color-base-800)] text-[var(--color-base-300)] hover:text-white text-xs font-bold transition-all">
                       Investigate
                     </Link>
                   </div>
@@ -204,7 +204,7 @@ export default async function AssessorDashboard() {
                         <span className="text-sm font-semibold text-white">{c.title} • Open {( (now.getTime() - new Date(c.createdAt).getTime()) / (1000 * 60 * 60) ).toFixed(0)}h</span>
                       </div>
                     </div>
-                    <Link href={`/assessor/reviews?claimId=${c._id}`} className="p-2 rounded-lg bg-[var(--color-base-900)] border border-[rgba(255,255,255,0.06)] hover:bg-[var(--color-base-800)] text-[var(--color-base-300)] hover:text-white text-xs font-bold transition-all">
+                    <Link href={`/assessor/review/${c._id}`} className="p-2 rounded-lg bg-[var(--color-base-900)] border border-[rgba(255,255,255,0.06)] hover:bg-[var(--color-base-800)] text-[var(--color-base-300)] hover:text-white text-xs font-bold transition-all">
                       Review
                     </Link>
                   </div>
@@ -222,7 +222,7 @@ export default async function AssessorDashboard() {
                         <span className="text-sm font-semibold text-white">{c.title} ({(c.customerId as SerializedUser)?.name || 'Customer'})</span>
                       </div>
                     </div>
-                    <Link href={`/assessor/reviews?claimId=${c._id}`} className="p-2 rounded-lg bg-[var(--color-base-900)] border border-[rgba(255,255,255,0.06)] hover:bg-[var(--color-base-800)] text-[var(--color-base-300)] hover:text-white text-xs font-bold transition-all">
+                    <Link href={`/assessor/review/${c._id}`} className="p-2 rounded-lg bg-[var(--color-base-900)] border border-[rgba(255,255,255,0.06)] hover:bg-[var(--color-base-800)] text-[var(--color-base-300)] hover:text-white text-xs font-bold transition-all">
                       Verify Docs
                     </Link>
                   </div>
@@ -240,7 +240,7 @@ export default async function AssessorDashboard() {
                         <span className="text-sm font-semibold text-white">{c.title} • {c.priority} Priority</span>
                       </div>
                     </div>
-                    <Link href={`/assessor/reviews?claimId=${c._id}`} className="p-2 rounded-lg bg-[var(--color-base-900)] border border-[rgba(255,255,255,0.06)] hover:bg-[var(--color-base-800)] text-[var(--color-base-300)] hover:text-white text-xs font-bold transition-all">
+                    <Link href={`/assessor/review/${c._id}`} className="p-2 rounded-lg bg-[var(--color-base-900)] border border-[rgba(255,255,255,0.06)] hover:bg-[var(--color-base-800)] text-[var(--color-base-300)] hover:text-white text-xs font-bold transition-all">
                       Analyze
                     </Link>
                   </div>

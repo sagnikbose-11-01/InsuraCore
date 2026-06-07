@@ -144,7 +144,7 @@ export default async function ClaimHistoryPage({
                     </td>
                     <td className="text-right">
                       <Link 
-                        href={`/assessor/reviews?claimId=${c._id}`}
+                        href={`/assessor/review/${c._id}`}
                         className="inline-flex items-center justify-center p-2 rounded-lg bg-[var(--color-base-900)] border border-[rgba(255,255,255,0.06)] hover:bg-[var(--color-base-800)] text-[var(--color-base-300)] hover:text-white transition-all"
                         title="Open in Console"
                       >

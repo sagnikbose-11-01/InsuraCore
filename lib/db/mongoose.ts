@@ -35,10 +35,12 @@ async function healDatabase() {
     await import('../../models/Policy');
     await import('../../models/PurchasedPolicy');
     await import('../../models/Claim');
+    await import('../../models/ClaimAuditLog');
 
     const Policy = mongoose.models.Policy || mongoose.model('Policy');
     const PurchasedPolicy = mongoose.models.PurchasedPolicy || mongoose.model('PurchasedPolicy');
     const Claim = mongoose.models.Claim || mongoose.model('Claim');
+    const ClaimAuditLog = mongoose.models.ClaimAuditLog || mongoose.model('ClaimAuditLog');
 
     // 1. Heal policyType
     const claims = await Claim.find({ policyType: { $exists: false } });

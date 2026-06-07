@@ -111,7 +111,7 @@ export async function submitAssessmentAction(formData: FormData): Promise<Action
     );
     revalidatePath('/assessor/claims');
     revalidatePath('/assessor/reviews');
-    revalidatePath(`/assessor/claims/${parsed.data.claimId}`);
+    revalidatePath(`/assessor/review/${parsed.data.claimId}`);
     return { success: true, message: `Claim ${raw.decision.toLowerCase()} successfully!`, data: claim };
   } catch (err) {
     return { success: false, message: (err as Error).message };
@@ -128,7 +128,7 @@ export async function startClaimReviewAction(claimId: string): Promise<ActionRes
     const claim = await startClaimReview(claimId, session.id);
     revalidatePath('/assessor/claims');
     revalidatePath('/assessor/reviews');
-    revalidatePath(`/assessor/claims/${claimId}`);
+    revalidatePath(`/assessor/review/${claimId}`);
     return { success: true, message: 'Review started successfully!', data: claim };
   } catch (err) {
     return { success: false, message: (err as Error).message };
@@ -153,7 +153,7 @@ export async function requestClaimDocumentsAction(
     const claim = await requestClaimDocuments(claimId, session.id, requestedDocs, remarks);
     revalidatePath('/assessor/claims');
     revalidatePath('/assessor/reviews');
-    revalidatePath(`/assessor/claims/${claimId}`);
+    revalidatePath(`/assessor/review/${claimId}`);
     return { success: true, message: 'Documents requested successfully!', data: claim };
   } catch (err) {
     return { success: false, message: (err as Error).message };
@@ -176,7 +176,7 @@ export async function addClaimNoteAction(
 
   try {
     const claim = await addClaimNote(claimId, session.id, text, isInternal);
-    revalidatePath(`/assessor/claims/${claimId}`);
+    revalidatePath(`/assessor/review/${claimId}`);
     revalidatePath('/assessor/reviews');
     return { success: true, message: 'Note added successfully!', data: claim };
   } catch (err) {

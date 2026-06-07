@@ -12,6 +12,7 @@ import ClaimAssessment from '@/models/ClaimAssessment';
 import ClaimDocument from '@/models/ClaimDocument';
 import Policy from '@/models/Policy';
 import PurchasedPolicy from '@/models/PurchasedPolicy';
+import ClaimAuditLog from '@/models/ClaimAuditLog';
 import { ClaimStatus, PolicyType, UserRole } from '@/lib/constants/enums';
 
 /**
@@ -154,8 +155,8 @@ export async function getAssessorDashboardMetrics(assessorId: string) {
     rejectedThisWeek,
     avgReviewTime: avgReviewTimeStr,
     fraudAlerts,
-    customersServed: uniqueCustomersServed || 2, // Fallback to 2 for display safety if DB just seeded
-    documentsAwaitingVerification: assignedDocsAwaiting || docsAwaitingCount || 0,
+    customersServed: uniqueCustomersServed,
+    documentsAwaitingVerification: assignedDocsAwaiting,
     highRiskClaims,
     workloadCountToday
   };
@@ -291,50 +292,68 @@ export async function getAssessorClaimDetail(assessorId: string, claimId: string
 export async function getAssessorRecentActivity(assessorId: string) {
   const assessor = await getAssessorContext(assessorId);
   const specialization = assessor.specialization as PolicyType;
-  
-  // Find recent assessments by this assessor
-  const assessments = await ClaimAssessment.find({ assessorId })
+  const purchasedPolicyIds = await getSpecializationPurchasedPolicyIds(specialization);
+
+  // Get all claim IDs in their specialization
+  const claims = await Claim.find({
+    $or: [
+      { policyType: specialization },
+      { purchasedPolicyId: { $in: purchasedPolicyIds } }
+    ]
+  }).select('_id').lean();
+  const claimIds = claims.map(c => c._id);
+
+  // Query ClaimAuditLog for these claims
+  const logs = await ClaimAuditLog.find({ claimId: { $in: claimIds } })
     .sort({ createdAt: -1 })
     .limit(10)
-    .populate('claimId', 'title policyType claimAmount status')
-    .lean();
-
-  // Find recent document updates or new claims in specialization
-  const recentClaims = await Claim.find({ policyType: specialization })
-    .sort({ createdAt: -1 })
-    .limit(5)
+    .populate('claimId', 'title policyType status')
+    .populate('assessorId', 'name')
     .populate('customerId', 'name')
     .lean();
 
-  const activities: any[] = [];
-
-  assessments.forEach((a: any) => {
-    if (a.claimId) {
-      const isApproved = a.approvedAmount > 0;
-      activities.push({
-        _id: `asm-${a._id}`,
-        type: isApproved ? 'APPROVED' : 'REJECTED',
-        title: isApproved ? 'Claim Approved' : 'Claim Rejected',
-        message: `You ${isApproved ? 'approved' : 'rejected'} claim "${a.claimId.title}" (${a.claimId._id.toString().slice(-8).toUpperCase()})`,
-        time: a.createdAt,
-      });
+  const activities = logs.map((log: any) => {
+    const claimRef = `INS-${log.claimId?._id?.toString().slice(-8).toUpperCase() || 'UNKNOWN'}`;
+    const claimTitle = log.claimId?.title || 'Claim';
+    const actorName = log.assessorId?.name || log.customerId?.name || 'System';
+    
+    let message = '';
+    switch (log.action) {
+      case 'REVIEW_STARTED':
+        message = `Review started for "${claimTitle}" (${claimRef}) by Assessor ${actorName}`;
+        break;
+      case 'DOCUMENT_REQUESTED':
+        message = `Documents requested for "${claimTitle}" (${claimRef}) by Assessor ${actorName}`;
+        break;
+      case 'NOTE_ADDED':
+        message = `Note added to "${claimTitle}" (${claimRef}) by Assessor ${actorName}`;
+        break;
+      case 'APPROVED':
+        message = `Claim "${claimTitle}" (${claimRef}) approved by Assessor ${actorName}`;
+        break;
+      case 'REJECTED':
+        message = `Claim "${claimTitle}" (${claimRef}) rejected by Assessor ${actorName}`;
+        break;
+      case 'CUSTOMER_RESPONDED':
+        message = `Customer ${actorName} uploaded supporting documents for "${claimTitle}" (${claimRef})`;
+        break;
+      case 'ESCALATED':
+        message = `Claim "${claimTitle}" (${claimRef}) was escalated`;
+        break;
+      default:
+        message = log.remarks || `Action ${log.action} performed on ${claimRef}`;
     }
+
+    return {
+      _id: log._id.toString(),
+      type: log.action,
+      title: log.action.replace('_', ' '),
+      message,
+      time: log.createdAt,
+    };
   });
 
-  recentClaims.forEach((c: any) => {
-    activities.push({
-      _id: `clm-${c._id}`,
-      type: 'NEW_CLAIM',
-      title: 'New Claim Assigned',
-      message: `New claim filed: "${c.title}" by ${c.customerId?.name || 'Customer'}`,
-      time: c.createdAt,
-    });
-  });
-
-  // Sort activities by time desc
-  activities.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
-
-  return JSON.parse(JSON.stringify(activities.slice(0, 8)));
+  return JSON.parse(JSON.stringify(activities));
 }
 
 /**
