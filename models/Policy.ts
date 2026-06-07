@@ -1,6 +1,6 @@
 // ============================================================
 // models/Policy.ts
-// Insurance policy template created by Admins.
+// Insurance policy template created by Admins or Assessors.
 // Customers purchase from these available policies.
 // ============================================================
 
@@ -16,6 +16,10 @@ export interface IPolicy extends Document {
   validityPeriod: number;      // Policy duration in months
   eligibility: string[];       // e.g., ["Age 18-65", "Indian Resident"]
   isActive: boolean;
+  // Optional assessor ownership — null for admin-created policies
+  createdByAssessorId?: mongoose.Types.ObjectId;
+  createdByName?: string;          // Denormalized for display
+  createdBySpecialization?: PolicyType; // Denormalized
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,6 +39,10 @@ const PolicySchema = new Schema<IPolicy>(
     validityPeriod: { type: Number, required: true, min: 1 }, // months
     eligibility: { type: [String], default: [] },
     isActive: { type: Boolean, default: true, index: true },
+    // Assessor ownership (optional)
+    createdByAssessorId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    createdByName: { type: String, default: null },
+    createdBySpecialization: { type: String, enum: Object.values(PolicyType), default: null },
   },
   { timestamps: true }
 );

@@ -14,10 +14,12 @@ import ClaimAssessment from '@/models/ClaimAssessment';
 import Notification from '@/models/Notification';
 import Policy from '@/models/Policy';
 import PurchasedPolicy from '@/models/PurchasedPolicy';
+import Payment, { IPayment } from '@/models/Payment';
 import ClaimAuditLog from '@/models/ClaimAuditLog';
+import AuditLog from '@/models/AuditLog';
 import { CreateClaimInput, AssessmentInput, AssignAssessorInput } from '@/lib/validators/claim.validators';
-import { ClaimStatus, DocumentStatus, PolicyType } from '@/lib/constants/enums';
-import { SerializedClaim, SerializedClaimDocument, SerializedClaimAssessment, ClaimsAnalytics } from '@/types';
+import { ClaimStatus, DocumentStatus, PolicyType, PaymentStatus } from '@/lib/constants/enums';
+import { SerializedClaim, SerializedClaimDocument, SerializedClaimAssessment, ClaimsAnalytics, SerializedPayment, SerializedNotification } from '@/types';
 
 // ---- Customer Actions ----
 
@@ -35,7 +37,37 @@ export async function createClaim(
   if (!policy || !policy.type) {
     throw new Error('Policy type not found on policy template');
   }
-  const policyType = policy.type;
+  const policyType = policy.type as PolicyType;
+
+  // ---- Least-Workload Auto-Assignment Engine ----
+  // Find all assessors with matching specialization
+  const matchingAssessors = await User.find({ 
+    role: 'ASSESSOR', 
+    specialization: policyType 
+  }).select('_id name').lean() as { _id: mongoose.Types.ObjectId; name: string }[];
+
+  let assignedAssessorId: mongoose.Types.ObjectId | null = null;
+  let assignedAssessorName: string | null = null;
+
+  if (matchingAssessors.length > 0) {
+    // Count active claims per assessor (not APPROVED, REJECTED, or PAID)
+    const activeCounts = await Promise.all(
+      matchingAssessors.map(async (a) => ({
+        assessorId: a._id,
+        assessorName: a.name,
+        count: await Claim.countDocuments({
+          assignedAssessorId: a._id,
+          status: { $nin: [ClaimStatus.APPROVED, ClaimStatus.REJECTED, 'PAID'] },
+        }),
+      }))
+    );
+
+    // Pick assessor with fewest active claims
+    activeCounts.sort((a, b) => a.count - b.count);
+    const selected = activeCounts[0];
+    assignedAssessorId = selected.assessorId;
+    assignedAssessorName = selected.assessorName;
+  }
 
   const claim = await Claim.create({
     customerId,
@@ -44,17 +76,69 @@ export async function createClaim(
     description: input.description,
     incidentDate: new Date(input.incidentDate),
     claimAmount: input.claimAmount,
-    status: ClaimStatus.SUBMITTED,
+    status: assignedAssessorId ? ClaimStatus.UNDER_REVIEW : ClaimStatus.SUBMITTED,
     policyType,
+    assignedAssessorId,
   });
 
+  // Notify customer
   await Notification.create({
     userId: customerId,
-    message: `Your claim "${input.title}" has been submitted and is under review.`,
+    title: 'Claim Submitted',
+    message: assignedAssessorId
+      ? `Your claim "${input.title}" has been submitted and automatically assigned to Assessor ${assignedAssessorName} for review.`
+      : `Your claim "${input.title}" has been submitted and is pending assignment to an assessor.`,
+    claimId: claim._id,
+    metadata: {
+      type: 'CLAIM_SUBMISSION',
+      claimTitle: input.title,
+      assessorName: assignedAssessorName || undefined,
+      timestamp: new Date().toISOString(),
+    },
+  });
+
+  // Notify auto-assigned assessor
+  if (assignedAssessorId) {
+    await Notification.create({
+      userId: assignedAssessorId,
+      title: 'New Claim Assigned',
+      message: `A new ${policyType} claim "${input.title}" has been auto-assigned to you for review.`,
+      claimId: claim._id,
+      metadata: {
+        type: 'CLAIM_ASSIGNED',
+        claimTitle: input.title,
+        timestamp: new Date().toISOString(),
+      },
+    });
+
+    // Audit log for auto-assignment
+    await ClaimAuditLog.create({
+      claimId: claim._id,
+      assessorId: assignedAssessorId,
+      customerId: new mongoose.Types.ObjectId(customerId),
+      action: 'REVIEW_STARTED',
+      remarks: `Claim auto-assigned to Assessor ${assignedAssessorName} via least-workload engine.`,
+      previousStatus: ClaimStatus.SUBMITTED,
+      newStatus: ClaimStatus.UNDER_REVIEW,
+    });
+  }
+
+  // Enterprise AuditLog: claim submission
+  const customer = await User.findById(customerId).select('name').lean() as { name: string } | null;
+  await AuditLog.create({
+    actorId: customerId,
+    actorName: customer?.name ?? 'Customer',
+    actorRole: 'CUSTOMER',
+    entityId: claim._id.toString(),
+    entityType: 'CLAIM',
+    action: 'CLAIM_SUBMISSION',
+    remarks: `Filed ${policyType} claim "${input.title}" for ₹${input.claimAmount.toLocaleString('en-IN')}.`,
   });
 
   return serializeClaim(claim);
 }
+
+
 
 export async function getMyClaimsWithDetails(customerId: string): Promise<SerializedClaim[]> {
   await connectDB();
@@ -90,7 +174,7 @@ export async function addClaimDocument(
   await connectDB();
   const doc = await ClaimDocument.create({ claimId, documentName, documentUrl });
   
-  const claim = await Claim.findById(claimId).select('customerId status');
+  const claim = await Claim.findById(claimId).select('customerId status assignedAssessorId title policyType');
   if (claim) {
     await logClaimAudit(
       claimId,
@@ -101,10 +185,27 @@ export async function addClaimDocument(
       claim.status,
       claim.status
     );
+
+    // Notify assigned assessor about new evidence upload
+    if (claim.assignedAssessorId) {
+      const claimRef = `INS-${claim._id.toString().slice(-8).toUpperCase()}`;
+      await Notification.create({
+        userId: claim.assignedAssessorId,
+        title: 'New Evidence Uploaded',
+        message: `The customer has uploaded "${documentName}" for ${claim.policyType || 'insurance'} claim ${claimRef} ("${claim.title || 'Claim'}"). Please review the new evidence.`,
+        claimId: claim._id,
+        metadata: {
+          type: 'DOCUMENT_UPLOADED',
+          claimTitle: claim.title,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    }
   }
   
   return serializeDocument(doc);
 }
+
 
 // ---- Admin Actions ----
 
@@ -262,6 +363,22 @@ export async function startClaimReview(claimId: string, assessorId: string): Pro
     previousStatus,
     ClaimStatus.UNDER_REVIEW
   );
+
+  // Notify customer: review has officially started
+  const claimRef = `INS-${claim._id.toString().slice(-8).toUpperCase()}`;
+  const policyType = claim.policyType || 'insurance';
+  await Notification.create({
+    userId: claim.customerId,
+    title: 'Claim Review Started',
+    message: `Assessor ${assessor.name} has started reviewing your ${policyType} claim ${claimRef} ("${claim.title}"). You will be notified once a decision is made.`,
+    claimId: claim._id,
+    metadata: {
+      type: 'REVIEW_STARTED',
+      assessorName: assessor.name,
+      claimTitle: claim.title,
+      timestamp: new Date().toISOString(),
+    },
+  });
 
   return serializeClaim(claim);
 }
@@ -660,4 +777,83 @@ export async function getClaimAssessments(claimId: string): Promise<SerializedCl
     assessorName: a.assessorName,
     decisionTimestamp: a.decisionTimestamp ? a.decisionTimestamp.toISOString() : undefined,
   }));
+}
+
+// ---- Policy Detail Data Aggregator ----
+// Fetches all data needed for the /dashboard/policies/[id] detail page:
+// claims, claim documents, settlement payments, and notifications.
+export async function getPolicyDetailData(
+  purchasedPolicyId: string,
+  userId: string
+): Promise<{
+  claims: SerializedClaim[];
+  documents: SerializedClaimDocument[];
+  payments: SerializedPayment[];
+  notifications: SerializedNotification[];
+}> {
+  await connectDB();
+
+  // 1. Fetch all claims for this purchased policy (with assessor info)
+  const claims = await Claim.find({ purchasedPolicyId })
+    .populate('assignedAssessorId', 'name email specialization')
+    .sort({ createdAt: -1 });
+
+  const claimIds = claims.map((c) => c._id);
+
+  // 2. Fetch related data in parallel
+  const [docs, payments, notifications] = await Promise.all([
+    claimIds.length > 0
+      ? ClaimDocument.find({ claimId: { $in: claimIds } }).sort({ createdAt: -1 })
+      : Promise.resolve([]),
+    claimIds.length > 0
+      ? Payment.find({ claimId: { $in: claimIds } }).sort({ createdAt: -1 })
+      : Promise.resolve([]),
+    claimIds.length > 0
+      ? Notification.find({ userId, claimId: { $in: claimIds } })
+          .sort({ createdAt: -1 })
+          .limit(10)
+      : Promise.resolve([]),
+  ]);
+
+  return {
+    claims: claims.map(serializeClaim),
+    documents: docs.map(serializeDocument),
+    payments: payments.map(serializePayment),
+    notifications: notifications.map(serializeNotification),
+  };
+}
+
+function serializePayment(payment: IPayment): SerializedPayment {
+  return {
+    _id: payment._id.toString(),
+    claimId: payment.claimId.toString(),
+    customerId: payment.customerId.toString(),
+    amount: payment.amount,
+    paymentMethod: payment.paymentMethod,
+    status: payment.status as PaymentStatus,
+    paymentDate: payment.paymentDate ? payment.paymentDate.toISOString() : null,
+    createdAt: payment.createdAt.toISOString(),
+  };
+}
+
+function serializeNotification(n: InstanceType<typeof Notification>): SerializedNotification {
+  return {
+    _id: n._id.toString(),
+    userId: n.userId.toString(),
+    message: n.message,
+    isRead: n.isRead,
+    title: n.title,
+    claimId: n.claimId?.toString(),
+    metadata: n.metadata
+      ? {
+          type: n.metadata.type,
+          approvedAmount: n.metadata.approvedAmount,
+          rejectionReason: n.metadata.rejectionReason,
+          requestedDocuments: n.metadata.requestedDocuments,
+          assessorRemarks: n.metadata.assessorRemarks,
+          assessorName: n.metadata.assessorName,
+        }
+      : undefined,
+    createdAt: n.createdAt.toISOString(),
+  };
 }

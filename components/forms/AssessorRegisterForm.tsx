@@ -148,15 +148,40 @@ export function AssessorRegisterForm() {
             leftAdornment={<Hash className="w-4 h-4" />}
           />
 
-          <Input
-            label="Specialization"
-            name="specialization"
-            type="text"
-            placeholder="Health, Auto, etc."
-            required
-            error={fieldErrors.specialization}
-            leftAdornment={<Briefcase className="w-4 h-4" />}
-          />
+          <div className="flex flex-col gap-1.5 w-full">
+            <label className="text-sm font-medium text-[var(--color-base-300)] select-none">
+              Specialization <span className="text-[var(--color-danger-400)]">*</span>
+            </label>
+            <div className="relative flex items-center">
+              <div className="absolute left-3 text-[var(--color-base-500)] pointer-events-none">
+                <Briefcase className="w-4 h-4" />
+              </div>
+              <select
+                name="specialization"
+                required
+                className={cn(
+                  'w-full h-10 rounded-[var(--radius-button)] appearance-none cursor-pointer',
+                  'bg-[var(--color-base-800)] border border-[var(--color-base-700)]',
+                  'text-[var(--color-base-100)] text-sm pl-9 pr-8',
+                  'focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)] focus:border-transparent',
+                  fieldErrors.specialization && 'border-[var(--color-danger-400)] focus:ring-[var(--color-danger-400)]'
+                )}
+              >
+                <option value="" className="bg-[var(--color-base-800)]">Select Specialization</option>
+                <option value="HEALTH" className="bg-[var(--color-base-800)]">Health</option>
+                <option value="AUTO" className="bg-[var(--color-base-800)]">Auto</option>
+                <option value="PROPERTY" className="bg-[var(--color-base-800)]">Property</option>
+                <option value="LIFE" className="bg-[var(--color-base-800)]">Life</option>
+                <option value="TRAVEL" className="bg-[var(--color-base-800)]">Travel</option>
+              </select>
+              <div className="absolute right-3 text-[var(--color-base-500)] pointer-events-none text-[10px]">
+                ▼
+              </div>
+            </div>
+            {fieldErrors.specialization && (
+              <p className="text-xs text-[var(--color-danger-400)]">{fieldErrors.specialization}</p>
+            )}
+          </div>
 
           <Input
             label="Years of Experience"

@@ -9,11 +9,11 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/session';
 import { getUserById } from '@/services/user.service';
-import { getMyPolicies, getAllPolicies } from '@/services/policy.service';
+import { getMyPoliciesWithClaimStats, getAllPolicies } from '@/services/policy.service';
 import { getMyClaimsWithDetails } from '@/services/claim.service';
 import { DashboardShell } from '@/components/shared/DashboardShell';
 import { PoliciesModule } from './PoliciesModule';
-import { PolicyStatus } from '@/lib/constants/enums';
+import { PolicyStatus, ClaimStatus } from '@/lib/constants/enums';
 import { SerializedPolicy } from '@/types';
 import { differenceInDays } from 'date-fns';
 
@@ -29,7 +29,7 @@ export default async function PoliciesPage() {
   // Parallel fetch: user profile + policies + claims
   const [user, myPolicies, availablePolicies, claims] = await Promise.all([
     getUserById(session.id),
-    getMyPolicies(session.id),
+    getMyPoliciesWithClaimStats(session.id),
     getAllPolicies(true),
     getMyClaimsWithDetails(session.id),
   ]);
@@ -54,12 +54,22 @@ export default async function PoliciesPage() {
     return daysLeft >= 0 && daysLeft <= 90;
   }).length;
 
+  const pendingClaims = claims.filter(c =>
+    [ClaimStatus.PENDING, ClaimStatus.SUBMITTED, ClaimStatus.UNDER_REVIEW, ClaimStatus.DOCUMENT_VERIFICATION].includes(c.status)
+  ).length;
+
+  const approvedClaims = claims.filter(c =>
+    [ClaimStatus.APPROVED, ClaimStatus.PAID].includes(c.status)
+  ).length;
+
   const stats = {
     activePolicies: activePolicies.length,
     totalCoverage,
     monthlyPremium,
     totalClaims: claims.length,
     expiringSoon,
+    pendingClaims,
+    approvedClaims,
   };
 
   return (

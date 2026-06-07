@@ -12,12 +12,13 @@ export interface NavItem {
 }
 
 export const CUSTOMER_NAV: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: 'LayoutDashboard' },
-  { label: 'My Policies', href: '/dashboard/policies', icon: 'ShieldCheck' },
-  { label: 'My Claims', href: '/dashboard/claims', icon: 'FileText' },
-  { label: 'File a Claim', href: '/dashboard/claims/file', icon: 'PlusCircle' },
+  { label: 'Dashboard',     href: '/dashboard',             icon: 'LayoutDashboard' },
+  { label: 'Marketplace',   href: '/dashboard/marketplace', icon: 'Store' },
+  { label: 'My Policies',   href: '/dashboard/policies',    icon: 'ShieldCheck' },
+  { label: 'My Claims',     href: '/dashboard/claims',      icon: 'FileText' },
+  { label: 'File a Claim',  href: '/dashboard/claims/file', icon: 'PlusCircle' },
   { label: 'Notifications', href: '/dashboard/notifications', icon: 'Bell' },
-  { label: 'Profile', href: '/dashboard/profile', icon: 'User' },
+  { label: 'Profile',       href: '/dashboard/profile',     icon: 'User' },
 ];
 
 export const ASSESSOR_NAV: NavItem[] = [

@@ -7,10 +7,15 @@
 import { connectDB } from '@/lib/db/mongoose';
 import Policy, { IPolicy } from '@/models/Policy';
 import PurchasedPolicy from '@/models/PurchasedPolicy';
+import Claim from '@/models/Claim';
+import Notification from '@/models/Notification';
+import User from '@/models/User';
+import AuditLog from '@/models/AuditLog';
 import { CreatePolicyInput } from '@/lib/validators/policy.validators';
-import { PolicyStatus } from '@/lib/constants/enums';
-import { SerializedPolicy, SerializedPurchasedPolicy } from '@/types';
+import { PolicyStatus, ClaimStatus } from '@/lib/constants/enums';
+import { SerializedPolicy, SerializedPurchasedPolicy, SerializedPurchasedPolicyWithStats, PolicyClaimStats } from '@/types';
 import { addMonths } from 'date-fns';
+import { serializePolicy, serializePurchasedPolicy } from '@/lib/utils/policy.serializers';
 
 // ---- Admin: Manage Policies ----
 
@@ -75,6 +80,35 @@ export async function purchasePolicy(
     status: PolicyStatus.ACTIVE,
   });
 
+  // Notify customer about successful purchase
+  await Notification.create({
+    userId,
+    title: 'Policy Purchased',
+    message: `Your "${policy.name}" policy has been activated. You are now covered until ${endDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}.`,
+  });
+
+  // Notify assessor if they created this product
+  if (policy.createdByAssessorId) {
+    const buyer = await User.findById(userId).select('name').lean();
+    await Notification.create({
+      userId: policy.createdByAssessorId,
+      title: 'Policy Purchased',
+      message: `A customer (${buyer?.name ?? 'Unknown'}) has purchased your "${policy.name}" policy product.`,
+    });
+  }
+
+  // Write enterprise audit log entry
+  const buyer = await User.findById(userId).select('name').lean() as { name: string } | null;
+  await AuditLog.create({
+    actorId: userId,
+    actorName: buyer?.name ?? 'Customer',
+    actorRole: 'CUSTOMER',
+    entityId: purchased._id.toString(),
+    entityType: 'PURCHASED_POLICY',
+    action: 'PURCHASE',
+    remarks: `Purchased policy "${policy.name}" (${policy.type}). Coverage: ₹${policy.coverageAmount?.toLocaleString('en-IN') ?? 0}. Valid until ${endDate.toLocaleDateString('en-IN')}.`,
+  });
+
   return serializePurchasedPolicy(purchased, policy);
 }
 
@@ -84,39 +118,80 @@ export async function getMyPolicies(userId: string): Promise<SerializedPurchased
     .populate('policyId')
     .sort({ createdAt: -1 });
 
-  return purchased.map((p) =>
-    serializePurchasedPolicy(p, p.policyId as unknown as IPolicy)
+  return purchased
+    .filter((p) => p.policyId != null)
+    .map((p) => serializePurchasedPolicy(p, p.policyId as unknown as IPolicy));
+}
+
+// Returns all purchased policies enriched with per-policy claim counts
+export async function getMyPoliciesWithClaimStats(
+  userId: string
+): Promise<SerializedPurchasedPolicyWithStats[]> {
+  await connectDB();
+
+  const purchased = await PurchasedPolicy.find({ userId })
+    .populate('policyId')
+    .sort({ createdAt: -1 });
+
+  const valid = purchased.filter((p) => p.policyId != null);
+  if (valid.length === 0) return [];
+
+  // Fetch all claims for this user in a single query
+  const purchasedIds = valid.map((p) => p._id);
+  const claims = await Claim.find({ purchasedPolicyId: { $in: purchasedIds } }).select(
+    'purchasedPolicyId status'
   );
+
+  // Group claim counts by purchasedPolicyId
+  const claimMap = new Map<string, PolicyClaimStats>();
+  for (const c of claims) {
+    const key = c.purchasedPolicyId.toString();
+    if (!claimMap.has(key)) {
+      claimMap.set(key, { total: 0, approved: 0, rejected: 0, underReview: 0, pending: 0 });
+    }
+    const stats = claimMap.get(key)!;
+    stats.total++;
+    if (c.status === ClaimStatus.APPROVED || c.status === ClaimStatus.PAID) stats.approved++;
+    else if (c.status === ClaimStatus.REJECTED) stats.rejected++;
+    else if (c.status === ClaimStatus.UNDER_REVIEW || c.status === ClaimStatus.DOCUMENT_VERIFICATION) stats.underReview++;
+    else stats.pending++;
+  }
+
+  return valid.map((p) => ({
+    ...serializePurchasedPolicy(p, p.policyId as unknown as IPolicy),
+    claimStats: claimMap.get(p._id.toString()) ?? {
+      total: 0, approved: 0, rejected: 0, underReview: 0, pending: 0,
+    },
+  }));
 }
 
-// ---- Serializers ----
+// ---- Marketplace Stats ----
 
-function serializePolicy(policy: IPolicy): SerializedPolicy {
+export async function getMarketplaceStats(): Promise<{
+  availablePlans: number;
+  activeCustomers: number;
+  claimsProcessed: number;
+  totalCoverageOffered: number;
+}> {
+  await connectDB();
+
+  const [availablePlans, activeCustomers, claimsProcessed, coverageAgg] = await Promise.all([
+    Policy.countDocuments({ isActive: true }),
+    PurchasedPolicy.countDocuments({ status: PolicyStatus.ACTIVE }),
+    Claim.countDocuments({}),
+    Policy.aggregate([
+      { $match: { isActive: true } },
+      { $group: { _id: null, total: { $sum: '$coverageAmount' } } },
+    ]),
+  ]);
+
   return {
-    _id: policy._id.toString(),
-    name: policy.name,
-    type: policy.type,
-    description: policy.description,
-    premiumAmount: policy.premiumAmount,
-    coverageAmount: policy.coverageAmount,
-    validityPeriod: policy.validityPeriod,
-    eligibility: policy.eligibility,
-    isActive: policy.isActive,
-    createdAt: policy.createdAt.toISOString(),
+    availablePlans,
+    activeCustomers,
+    claimsProcessed,
+    totalCoverageOffered: coverageAgg[0]?.total ?? 0,
   };
 }
 
-function serializePurchasedPolicy(
-  purchased: InstanceType<typeof PurchasedPolicy>,
-  policy: IPolicy
-): SerializedPurchasedPolicy {
-  return {
-    _id: purchased._id.toString(),
-    userId: purchased.userId.toString(),
-    policyId: serializePolicy(policy),
-    startDate: purchased.startDate.toISOString(),
-    endDate: purchased.endDate.toISOString(),
-    status: purchased.status,
-    createdAt: purchased.createdAt.toISOString(),
-  };
-}
+// Serializers are in lib/utils/policy.serializers.ts (no 'use server').
+// They are imported above and used internally by the async service functions.

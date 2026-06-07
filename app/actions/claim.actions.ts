@@ -100,6 +100,20 @@ export async function submitAssessmentAction(formData: FormData): Promise<Action
     };
   }
 
+  // Server-side boundary check: approvedAmount must not exceed the filed claimAmount
+  if (parsed.data.decision === 'APPROVED' && parsed.data.approvedAmount > 0) {
+    const { connectDB } = await import('@/lib/db/mongoose');
+    const ClaimModel = (await import('@/models/Claim')).default;
+    await connectDB();
+    const existingClaim = await ClaimModel.findById(parsed.data.claimId).select('claimAmount').lean() as { claimAmount: number } | null;
+    if (existingClaim && parsed.data.approvedAmount > existingClaim.claimAmount) {
+      return {
+        success: false,
+        message: `Approved amount (₹${parsed.data.approvedAmount.toLocaleString('en-IN')}) cannot exceed the filed claim amount (₹${existingClaim.claimAmount.toLocaleString('en-IN')}).`,
+      };
+    }
+  }
+
   try {
     const claim = await submitClaimDecision(
       parsed.data.claimId,

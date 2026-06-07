@@ -48,6 +48,10 @@ export interface SerializedPolicy {
   eligibility: string[];
   isActive: boolean;
   createdAt: string;
+  // Optional assessor ownership
+  createdByAssessorId?: string | null;
+  createdByName?: string | null;
+  createdBySpecialization?: string | null;
 }
 
 export interface SerializedPurchasedPolicy {
@@ -151,4 +155,17 @@ export interface ClaimsAnalytics {
   totalApprovedAmount: number;
   approvalRate: number;
   monthlyTrend: { month: string; count: number; amount: number }[];
+}
+
+// ---- Per-policy claim aggregation ----
+export interface PolicyClaimStats {
+  total: number;
+  approved: number;   // APPROVED + PAID
+  rejected: number;
+  underReview: number; // UNDER_REVIEW + DOCUMENT_VERIFICATION
+  pending: number;    // PENDING + SUBMITTED
+}
+
+export interface SerializedPurchasedPolicyWithStats extends SerializedPurchasedPolicy {
+  claimStats: PolicyClaimStats;
 }

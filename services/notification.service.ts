@@ -49,6 +49,7 @@ function serializeNotification(notif: INotification): SerializedNotification {
       rejectionReason: notif.metadata.rejectionReason,
       requestedDocuments: notif.metadata.requestedDocuments,
       assessorRemarks: notif.metadata.assessorRemarks,
+      assessorName: notif.metadata.assessorName,
     } : undefined,
     createdAt: notif.createdAt.toISOString(),
   };

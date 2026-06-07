@@ -8,10 +8,10 @@
 import Link from 'next/link';
 import {
   ShieldCheck, Calendar, Clock, ArrowRight,
-  FileText, RefreshCw, Download, AlertTriangle,
+  FileText, RefreshCw, AlertTriangle, CheckCircle,
 } from 'lucide-react';
-import { SerializedPurchasedPolicy, SerializedPolicy } from '@/types';
-import { PolicyType } from '@/lib/constants/enums';
+import { SerializedPurchasedPolicyWithStats, SerializedPolicy } from '@/types';
+import { PolicyType, PolicyStatus } from '@/lib/constants/enums';
 import { formatDate } from '@/lib/utils/formatters';
 import { differenceInDays } from 'date-fns';
 
@@ -27,17 +27,36 @@ const TYPE_CONFIG: Record<
   TRAVEL:   { gradient: 'from-[oklch(18%_0.05_260_/_0.6)]', badgeBg: 'bg-[oklch(18%_0.05_260)]', badgeText: 'text-[oklch(72%_0.15_260)]', badgeBorder: 'border-[oklch(28%_0.08_260)]', icon: '✈️' },
 };
 
+const STATUS_CONFIG: Record<
+  PolicyStatus,
+  { label: string; badge: string }
+> = {
+  [PolicyStatus.ACTIVE]: {
+    label: 'Active',
+    badge: 'bg-[oklch(20%_0.05_150_/_0.3)] text-[oklch(72%_0.17_150)] border-[oklch(30%_0.08_150_/_0.5)]',
+  },
+  [PolicyStatus.EXPIRED]: {
+    label: 'Expired',
+    badge: 'bg-[oklch(20%_0.02_0_/_0.3)] text-[var(--color-base-400)] border-[var(--color-base-700)]',
+  },
+  [PolicyStatus.CANCELLED]: {
+    label: 'Cancelled',
+    badge: 'bg-[oklch(18%_0.05_25_/_0.3)] text-[oklch(65%_0.20_25)] border-[oklch(28%_0.08_25_/_0.5)]',
+  },
+};
+
 function formatCurrency(n: number) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 }
 
 interface ActivePolicyCardProps {
-  purchasedPolicy: SerializedPurchasedPolicy;
+  purchasedPolicy: SerializedPurchasedPolicyWithStats;
 }
 
 export function ActivePolicyCard({ purchasedPolicy }: ActivePolicyCardProps) {
   const policy = purchasedPolicy.policyId as SerializedPolicy;
   const cfg = TYPE_CONFIG[policy.type as PolicyType] ?? TYPE_CONFIG.HEALTH;
+  const statusCfg = STATUS_CONFIG[purchasedPolicy.status] ?? STATUS_CONFIG[PolicyStatus.ACTIVE];
 
   const today = new Date();
   const endDate = new Date(purchasedPolicy.endDate);
@@ -45,8 +64,10 @@ export function ActivePolicyCard({ purchasedPolicy }: ActivePolicyCardProps) {
   const daysRemaining = differenceInDays(endDate, today);
   const totalDays = differenceInDays(endDate, startDate);
   const progressPct = Math.min(100, Math.max(0, Math.round(((totalDays - daysRemaining) / totalDays) * 100)));
-  const isExpiringSoon = daysRemaining <= 90 && daysRemaining >= 0;
-  const isExpired = daysRemaining < 0;
+  
+  const isActive = purchasedPolicy.status === PolicyStatus.ACTIVE;
+  const isExpiringSoon = isActive && daysRemaining <= 90 && daysRemaining >= 0;
+  const isExpired = purchasedPolicy.status === PolicyStatus.EXPIRED || daysRemaining < 0;
 
   return (
     <div className={`relative overflow-hidden stat-card group hover:border-[var(--color-brand-700)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-300`}>
@@ -69,10 +90,13 @@ export function ActivePolicyCard({ purchasedPolicy }: ActivePolicyCardProps) {
               <h3 className="text-sm font-bold text-[var(--color-base-100)] leading-tight group-hover:text-white transition-colors">
                 {policy.name}
               </h3>
+              <p className="text-[10px] text-[var(--color-base-500)] font-mono mt-0.5">
+                POL-{purchasedPolicy._id.slice(-8).toUpperCase()}
+              </p>
             </div>
           </div>
-          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full bg-[oklch(20%_0.05_150)] text-[oklch(72%_0.17_150)] border border-[oklch(30%_0.08_150)]">
-            ● Active
+          <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusCfg.badge}`}>
+            ● {statusCfg.label}
           </span>
         </div>
 
@@ -103,6 +127,24 @@ export function ActivePolicyCard({ purchasedPolicy }: ActivePolicyCardProps) {
           </span>
         </div>
 
+        {/* ── Claim stats ── */}
+        <div className="flex items-center justify-between text-[11px] text-[var(--color-base-450)] px-3 py-2 rounded-xl bg-[var(--color-base-950)]/40 border border-[var(--color-base-800)]/60 mb-4">
+          <span className="text-[var(--color-base-400)] font-medium">Claims Summary</span>
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-[var(--color-base-200)]">
+              {purchasedPolicy.claimStats.total} filed
+            </span>
+            <span className="text-[var(--color-base-750)]">·</span>
+            <span className="font-semibold text-[oklch(72%_0.17_150)]">
+              {purchasedPolicy.claimStats.approved} approved
+            </span>
+            <span className="text-[var(--color-base-750)]">·</span>
+            <span className="font-semibold text-[oklch(78%_0.18_75)]">
+              {purchasedPolicy.claimStats.underReview} review
+            </span>
+          </div>
+        </div>
+
         {/* ── Time progress bar ── */}
         <div className="mb-2">
           <div className="flex justify-between text-[10px] mb-1">
@@ -110,6 +152,8 @@ export function ActivePolicyCard({ purchasedPolicy }: ActivePolicyCardProps) {
             <span className={`font-semibold ${isExpiringSoon ? 'text-[oklch(65%_0.20_25)]' : 'text-[var(--color-base-400)]'}`}>
               {isExpired
                 ? 'Expired'
+                : purchasedPolicy.status === PolicyStatus.CANCELLED
+                ? 'Cancelled'
                 : `${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} remaining`
               }
             </span>
@@ -119,9 +163,11 @@ export function ActivePolicyCard({ purchasedPolicy }: ActivePolicyCardProps) {
               className={`h-full rounded-full transition-all duration-700 ${
                 isExpiringSoon
                   ? 'bg-gradient-to-r from-[oklch(65%_0.20_25)] to-[oklch(55%_0.22_25)]'
+                  : isExpired || purchasedPolicy.status === PolicyStatus.CANCELLED
+                  ? 'bg-[var(--color-base-700)]'
                   : 'bg-gradient-to-r from-[oklch(58%_0.22_230)] to-[oklch(72%_0.20_230)]'
               }`}
-              style={{ width: `${progressPct}%` }}
+              style={{ width: `${isExpired || purchasedPolicy.status === PolicyStatus.CANCELLED ? 100 : progressPct}%` }}
             />
           </div>
         </div>
@@ -137,21 +183,34 @@ export function ActivePolicyCard({ purchasedPolicy }: ActivePolicyCardProps) {
         )}
 
         {/* ── Quick actions ── */}
-        <div className="grid grid-cols-2 gap-2 mt-5 pt-4 border-t border-[var(--color-base-800)]">
+        <div className="flex flex-col gap-2 mt-5 pt-4 border-t border-[var(--color-base-800)]">
           <Link
             href={`/dashboard/policies/${purchasedPolicy._id}`}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--color-brand-500)] hover:bg-[var(--color-brand-400)] text-white text-xs font-semibold transition-colors"
+            className="flex items-center justify-center gap-1.5 w-full px-3 py-2.5 rounded-lg bg-[var(--color-brand-500)] hover:bg-[var(--color-brand-400)] text-white text-xs font-semibold transition-colors"
           >
             <ArrowRight className="w-3 h-3" />
-            View Details
+            Manage Policy & View Details
           </Link>
-          <Link
-            href="/dashboard/claims/file"
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--color-base-700)] hover:bg-[var(--color-base-600)] text-[var(--color-base-200)] text-xs font-semibold transition-colors"
-          >
-            <FileText className="w-3 h-3" />
-            File Claim
-          </Link>
+          <div className="grid grid-cols-2 gap-2">
+            <Link
+              href={`/dashboard/claims?policy=${purchasedPolicy._id}`}
+              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--color-base-800)] hover:bg-[var(--color-base-700)] text-[var(--color-base-200)] border border-[var(--color-base-700)] text-xs font-semibold transition-colors"
+            >
+              <FileText className="w-3 h-3" />
+              View Claims
+            </Link>
+            <Link
+              href={isActive ? `/dashboard/claims/file` : '#'}
+              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                isActive
+                  ? 'bg-[var(--color-base-800)] hover:bg-[var(--color-base-700)] text-[var(--color-base-200)] border border-[var(--color-base-700)]'
+                  : 'bg-[var(--color-base-900)] text-[var(--color-base-600)] border border-[var(--color-base-800)] cursor-not-allowed pointer-events-none'
+              }`}
+            >
+              <RefreshCw className="w-3 h-3" />
+              File Claim
+            </Link>
+          </div>
         </div>
       </div>
     </div>

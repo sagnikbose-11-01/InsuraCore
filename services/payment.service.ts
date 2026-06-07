@@ -8,6 +8,8 @@ import { connectDB } from '@/lib/db/mongoose';
 import Payment from '@/models/Payment';
 import Claim from '@/models/Claim';
 import Notification from '@/models/Notification';
+import AuditLog from '@/models/AuditLog';
+import User from '@/models/User';
 import { PaymentStatus, ClaimStatus } from '@/lib/constants/enums';
 import { SerializedPayment } from '@/types';
 
@@ -55,7 +57,20 @@ export async function releasePayment(paymentId: string): Promise<SerializedPayme
   // Notify customer
   await Notification.create({
     userId: payment.customerId,
+    title: 'Settlement Released',
     message: `Your settlement of ₹${payment.amount.toLocaleString('en-IN')} has been released successfully.`,
+  });
+
+  // Write enterprise audit log entry
+  const customer = await User.findById(payment.customerId).select('name').lean() as { name: string } | null;
+  await AuditLog.create({
+    actorId: payment.customerId,
+    actorName: customer?.name ?? 'Customer',
+    actorRole: 'SYSTEM',
+    entityId: payment._id.toString(),
+    entityType: 'PAYMENT',
+    action: 'PAYMENT_RELEASED',
+    remarks: `Settlement of ₹${payment.amount.toLocaleString('en-IN')} released via ${payment.paymentMethod} for claim ${payment.claimId.toString().slice(-8).toUpperCase()}.`,
   });
 
   return serializePayment(payment);

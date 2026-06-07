@@ -150,8 +150,8 @@ export default async function CustomerDashboardPage() {
               <div className="py-8 text-center">
                 <ShieldCheck className="w-8 h-8 mx-auto text-[var(--color-base-700)] mb-3" />
                 <p className="text-xs text-[var(--color-base-500)] mb-3">No active policies</p>
-                <Link href="/dashboard/policies">
-                  <Button size="sm" variant="outline">Browse Policies</Button>
+                <Link href="/dashboard/marketplace">
+                  <Button size="sm" variant="outline">Browse Marketplace</Button>
                 </Link>
               </div>
             ) : (

@@ -6,7 +6,7 @@
 // Pure presentational — all values computed server-side.
 // ============================================================
 
-import { ShieldCheck, Wallet, DollarSign, FileText, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, Wallet, DollarSign, FileText, AlertTriangle, FileCheck } from 'lucide-react';
 
 interface PortfolioStats {
   activePolicies: number;
@@ -14,6 +14,8 @@ interface PortfolioStats {
   monthlyPremium: number;
   totalClaims: number;
   expiringSoon: number;    // active policies expiring within 90 days
+  pendingClaims: number;
+  approvedClaims: number;
 }
 
 interface PolicyPortfolioStatsProps {
@@ -69,15 +71,24 @@ const METRICS = (stats: PortfolioStats) => [
     valColor:  'text-[var(--color-base-100)]',
   },
   {
-    label:     'Expiring Soon',
-    value:     String(stats.expiringSoon),
-    desc:      'within 90 days',
+    label:     'Pending Claims',
+    value:     String(stats.pendingClaims),
+    desc:      'awaiting assessment',
     icon:      AlertTriangle,
-    iconBg:    stats.expiringSoon > 0
+    iconBg:    stats.pendingClaims > 0
       ? 'bg-[oklch(18%_0.05_25)] border-[oklch(28%_0.08_25)]'
       : 'bg-[var(--color-base-800)] border-[var(--color-base-700)]',
-    iconColor: stats.expiringSoon > 0 ? 'text-[oklch(65%_0.20_25)]' : 'text-[var(--color-base-500)]',
-    valColor:  stats.expiringSoon > 0 ? 'text-[oklch(65%_0.20_25)]' : 'text-[var(--color-base-100)]',
+    iconColor: stats.pendingClaims > 0 ? 'text-[oklch(65%_0.20_25)]' : 'text-[var(--color-base-500)]',
+    valColor:  stats.pendingClaims > 0 ? 'text-[oklch(65%_0.20_25)]' : 'text-[var(--color-base-100)]',
+  },
+  {
+    label:     'Approved Claims',
+    value:     String(stats.approvedClaims),
+    desc:      'settled or payout ready',
+    icon:      FileCheck,
+    iconBg:    'bg-[oklch(20%_0.05_150)] border-[oklch(30%_0.08_150)]',
+    iconColor: 'text-[oklch(72%_0.17_150)]',
+    valColor:  'text-[oklch(72%_0.17_150)]',
   },
 ];
 
@@ -119,7 +130,7 @@ export function PolicyPortfolioStats({ stats, userName }: PolicyPortfolioStatsPr
       </div>
 
       {/* Metric cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         {metrics.map((m) => {
           const Icon = m.icon;
           return (

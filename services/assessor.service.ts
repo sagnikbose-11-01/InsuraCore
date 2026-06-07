@@ -73,17 +73,17 @@ export async function getAssessorDashboardMetrics(assessorId: string) {
     Claim.countDocuments({ ...baseQuery, assignedAssessorId: assessorId, status: { $nin: [ClaimStatus.APPROVED, ClaimStatus.REJECTED, ClaimStatus.PAID] } }),
     // Claims currently being reviewed by them
     Claim.countDocuments({ ...baseQuery, assignedAssessorId: assessorId, status: ClaimStatus.UNDER_REVIEW }),
-    // Approved this week by this assessor
+    // Approved this week by this assessor (using decisionType for accuracy)
     ClaimAssessment.countDocuments({ 
       assessorId, 
       createdAt: { $gte: startOfWeek }, 
-      approvedAmount: { $gt: 0 } 
+      decisionType: 'APPROVED'
     }),
-    // Rejected this week by this assessor (assessed with 0 amount or rejected remarks)
+    // Rejected this week by this assessor (using decisionType for accuracy)
     ClaimAssessment.countDocuments({ 
       assessorId, 
       createdAt: { $gte: startOfWeek }, 
-      approvedAmount: 0 
+      decisionType: 'REJECTED'
     }),
     // High risk claims count
     Claim.countDocuments({ ...baseQuery, riskScore: { $gte: 80 }, status: { $nin: [ClaimStatus.APPROVED, ClaimStatus.REJECTED, ClaimStatus.PAID] } }),
@@ -506,9 +506,9 @@ export async function getAssessorPerformanceMetrics(assessorId: string) {
   const monthlyMap: Record<string, { month: string; reviewed: number; approved: number; rejected: number }> = {};
   
   assessments.forEach((a: any) => {
-    if (a.approvedAmount > 0) {
+    if (a.decisionType === 'APPROVED') {
       approvedCount++;
-    } else {
+    } else if (a.decisionType === 'REJECTED') {
       rejectedCount++;
     }
 
@@ -526,9 +526,9 @@ export async function getAssessorPerformanceMetrics(assessorId: string) {
       monthlyMap[monthName] = { month: monthName, reviewed: 0, approved: 0, rejected: 0 };
     }
     monthlyMap[monthName].reviewed++;
-    if (a.approvedAmount > 0) {
+    if (a.decisionType === 'APPROVED') {
       monthlyMap[monthName].approved++;
-    } else {
+    } else if (a.decisionType === 'REJECTED') {
       monthlyMap[monthName].rejected++;
     }
   });
@@ -758,9 +758,9 @@ export async function getAssessorProfileData(assessorId: string) {
       monthlyMap[m] = { month: m, reviewed: 0, approved: 0, rejected: 0 };
     }
     monthlyMap[m].reviewed++;
-    if (a.approvedAmount > 0) {
+    if (a.decisionType === 'APPROVED') {
       monthlyMap[m].approved++;
-    } else {
+    } else if (a.decisionType === 'REJECTED') {
       monthlyMap[m].rejected++;
     }
   });

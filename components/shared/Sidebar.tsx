@@ -9,7 +9,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
   LayoutDashboard, ShieldCheck, FileText, PlusCircle, Bell, User,
-  ClipboardList, Users, BarChart3, LogOut, ChevronRight,
+  ClipboardList, Users, BarChart3, LogOut, ChevronRight, Store,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { logoutAction } from '@/app/actions/auth.actions';
@@ -20,14 +20,15 @@ import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 const ICON_MAP: Record<string, React.ReactNode> = {
   LayoutDashboard: <LayoutDashboard className="w-4 h-4" />,
-  ShieldCheck: <ShieldCheck className="w-4 h-4" />,
-  FileText: <FileText className="w-4 h-4" />,
-  PlusCircle: <PlusCircle className="w-4 h-4" />,
-  Bell: <Bell className="w-4 h-4" />,
-  User: <User className="w-4 h-4" />,
-  ClipboardList: <ClipboardList className="w-4 h-4" />,
-  Users: <Users className="w-4 h-4" />,
-  BarChart3: <BarChart3 className="w-4 h-4" />,
+  ShieldCheck:     <ShieldCheck className="w-4 h-4" />,
+  FileText:        <FileText className="w-4 h-4" />,
+  PlusCircle:      <PlusCircle className="w-4 h-4" />,
+  Bell:            <Bell className="w-4 h-4" />,
+  User:            <User className="w-4 h-4" />,
+  ClipboardList:   <ClipboardList className="w-4 h-4" />,
+  Users:           <Users className="w-4 h-4" />,
+  BarChart3:       <BarChart3 className="w-4 h-4" />,
+  Store:           <Store className="w-4 h-4" />,
 };
 
 interface SidebarProps {
