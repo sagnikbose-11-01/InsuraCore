@@ -30,6 +30,9 @@ export interface SerializedUser {
   employeeId?: string;
   specialization?: string;
   yearsOfExperience?: number;
+  bio?: string;
+  lastLoginAt?: string;
+  passwordChangedAt?: string;
   createdAt: string;
   updatedAt: string;
 }

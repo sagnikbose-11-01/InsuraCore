@@ -107,6 +107,9 @@ export async function loginUser(
     throw new Error('Invalid email or password.');
   }
 
+  user.lastLoginAt = new Date();
+  await user.save();
+
   const token = signToken({
     id: user._id.toString(),
     email: user.email,
@@ -146,6 +149,36 @@ export async function updateUserProfile(
   return serializeUser(user);
 }
 
+export async function updateAssessorProfile(
+  id: string,
+  data: { name?: string; phone?: string; avatar?: string; yearsOfExperience?: number; bio?: string }
+): Promise<SerializedUser> {
+  await connectDB();
+  const user = await User.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+  if (!user) throw new Error('User not found');
+  return serializeUser(user);
+}
+
+export async function changeAssessorPassword(
+  id: string,
+  currentPassword?: string,
+  newPassword?: string
+): Promise<void> {
+  await connectDB();
+  const user = await User.findById(id).select('+password');
+  if (!user) throw new Error('User not found');
+
+  if (currentPassword && newPassword) {
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) throw new Error('Current password is incorrect');
+    user.password = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    user.passwordChangedAt = new Date();
+    await user.save();
+  } else {
+    throw new Error('Invalid password change data');
+  }
+}
+
 // Convert Mongoose document to a plain serializable object
 function serializeUser(user: IUser): SerializedUser {
   return {
@@ -160,6 +193,9 @@ function serializeUser(user: IUser): SerializedUser {
     employeeId: user.employeeId,
     specialization: user.specialization,
     yearsOfExperience: user.yearsOfExperience,
+    bio: user.bio,
+    lastLoginAt: user.lastLoginAt ? user.lastLoginAt.toISOString() : undefined,
+    passwordChangedAt: user.passwordChangedAt ? user.passwordChangedAt.toISOString() : undefined,
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString(),
   };

@@ -575,3 +575,216 @@ export async function getAssessorAnalytics(assessorId: string) {
     ]
   };
 }
+
+/**
+ * Retrieves comprehensive metrics, workload, activity, and achievements for the Profile.
+ */
+export async function getAssessorProfileData(assessorId: string) {
+  const assessor = await getAssessorContext(assessorId);
+  const specialization = assessor.specialization as PolicyType;
+  const purchasedPolicyIds = await getSpecializationPurchasedPolicyIds(specialization);
+
+  const baseQuery = {
+    $or: [
+      { policyType: specialization },
+      { purchasedPolicyId: { $in: purchasedPolicyIds } }
+    ]
+  };
+
+  // 1. Specialization metrics
+  const [
+    assignedCount,
+    approvedCount,
+    rejectedCount,
+    underReviewCount,
+    awaitingDocsCount,
+  ] = await Promise.all([
+    Claim.countDocuments({ ...baseQuery, assignedAssessorId: assessorId }),
+    Claim.countDocuments({ ...baseQuery, assignedAssessorId: assessorId, status: { $in: [ClaimStatus.APPROVED, ClaimStatus.PAID] } }),
+    Claim.countDocuments({ ...baseQuery, assignedAssessorId: assessorId, status: ClaimStatus.REJECTED }),
+    Claim.countDocuments({ ...baseQuery, assignedAssessorId: assessorId, status: ClaimStatus.UNDER_REVIEW }),
+    Claim.countDocuments({ ...baseQuery, assignedAssessorId: assessorId, status: ClaimStatus.DOCUMENT_VERIFICATION }),
+  ]);
+
+  // Workload summary (must be specialization filtered)
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const [
+    openClaims,
+    approvedToday,
+    rejectedToday,
+  ] = await Promise.all([
+    Claim.countDocuments({ ...baseQuery, assignedAssessorId: null, status: { $nin: [ClaimStatus.APPROVED, ClaimStatus.REJECTED, ClaimStatus.PAID] } }),
+    Claim.countDocuments({ ...baseQuery, assignedAssessorId: assessorId, status: { $in: [ClaimStatus.APPROVED, ClaimStatus.PAID] }, updatedAt: { $gte: todayStart } }),
+    Claim.countDocuments({ ...baseQuery, assignedAssessorId: assessorId, status: ClaimStatus.REJECTED, updatedAt: { $gte: todayStart } }),
+  ]);
+
+  // Average Resolution Time from assessments
+  const assessments = await ClaimAssessment.find({ assessorId })
+    .select('reviewStartedAt reviewCompletedAt createdAt')
+    .lean();
+
+  let avgResolutionHours = 0;
+  let totalReviewed = assessments.length;
+  let totalResolutionTimeMs = 0;
+  let timedCount = 0;
+
+  assessments.forEach((a: any) => {
+    if (a.reviewStartedAt && a.reviewCompletedAt) {
+      totalResolutionTimeMs += new Date(a.reviewCompletedAt).getTime() - new Date(a.reviewStartedAt).getTime();
+      timedCount++;
+    } else {
+      totalResolutionTimeMs += 1.5 * 60 * 60 * 1000; // default 1.5h
+      timedCount++;
+    }
+  });
+
+  if (timedCount > 0) {
+    avgResolutionHours = totalResolutionTimeMs / (timedCount * 60 * 60 * 1000);
+  }
+
+  const avgResolutionTimeStr = avgResolutionHours === 0 
+    ? '0h' 
+    : avgResolutionHours < 1 
+      ? `${Math.round(avgResolutionHours * 60)}m` 
+      : `${avgResolutionHours.toFixed(1)}h`;
+
+  // Approval vs Rejection rate
+  const approvalRate = totalReviewed > 0 ? Math.round((approvedCount / totalReviewed) * 100) : 0;
+  const rejectionRate = totalReviewed > 0 ? Math.round((rejectedCount / totalReviewed) * 100) : 0;
+
+  // Claims Closed This Month
+  const thisMonthStart = new Date();
+  thisMonthStart.setDate(1);
+  thisMonthStart.setHours(0, 0, 0, 0);
+  const claimsClosedThisMonth = await Claim.countDocuments({
+    ...baseQuery,
+    assignedAssessorId: assessorId,
+    status: { $in: [ClaimStatus.APPROVED, ClaimStatus.REJECTED, ClaimStatus.PAID] },
+    updatedAt: { $gte: thisMonthStart }
+  });
+
+  // Fraud Cases Detected
+  const fraudCasesDetected = await Claim.countDocuments({
+    ...baseQuery,
+    assignedAssessorId: assessorId,
+    fraudFlags: { $exists: true, $not: { $size: 0 } }
+  });
+
+  // Achievements Badges
+  const achievements = [];
+  if (totalReviewed >= 5) {
+    achievements.push({
+      id: 'active-auditor',
+      title: 'Active Auditor',
+      desc: 'Completed at least 5 claim investigations.',
+      icon: 'ClipboardList',
+      variant: 'purple'
+    });
+  }
+  if (totalReviewed >= 100) {
+    achievements.push({
+      id: 'century-club',
+      title: 'Century Club',
+      desc: 'Reviewed 100+ claims.',
+      icon: 'Award',
+      variant: 'yellow'
+    });
+  }
+  if (totalReviewed >= 5 && approvalRate >= 80) {
+    achievements.push({
+      id: 'top-performer',
+      title: 'Top Performer',
+      desc: 'Maintained an 80%+ claim approval rate.',
+      icon: 'ShieldCheck',
+      variant: 'emerald'
+    });
+  }
+  if (avgResolutionHours > 0 && avgResolutionHours <= 2) {
+    achievements.push({
+      id: 'speedy-reviewer',
+      title: 'Speed Demon',
+      desc: 'Average claim resolution time under 2 hours.',
+      icon: 'Clock',
+      variant: 'blue'
+    });
+  }
+  if (fraudCasesDetected > 0) {
+    achievements.push({
+      id: 'fraud-buster',
+      title: 'Fraud Investigator',
+      desc: 'Identified and flagged suspicious claims.',
+      icon: 'ShieldAlert',
+      variant: 'rose'
+    });
+  }
+
+  // Recent Activity from audit logs
+  const logs = await ClaimAuditLog.find({ assessorId })
+    .sort({ createdAt: -1 })
+    .limit(10)
+    .populate('claimId', 'title policyType status')
+    .lean();
+
+  const activities = logs.map((log: any) => {
+    const claimRef = `INS-${log.claimId?._id?.toString().slice(-8).toUpperCase() || 'UNKNOWN'}`;
+    const claimTitle = log.claimId?.title || 'Claim';
+    return {
+      _id: log._id.toString(),
+      action: log.action,
+      remarks: log.remarks,
+      createdAt: log.createdAt.toISOString(),
+      claimRef,
+      claimTitle,
+      claimId: log.claimId?._id?.toString()
+    };
+  });
+
+  // Monthly Analytics for chart
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+  const monthlyMap: Record<string, { month: string; reviewed: number; approved: number; rejected: number }> = {};
+  assessments.forEach((a: any) => {
+    const date = new Date(a.createdAt);
+    const m = date.toLocaleString('default', { month: 'short' });
+    if (!monthlyMap[m]) {
+      monthlyMap[m] = { month: m, reviewed: 0, approved: 0, rejected: 0 };
+    }
+    monthlyMap[m].reviewed++;
+    if (a.approvedAmount > 0) {
+      monthlyMap[m].approved++;
+    } else {
+      monthlyMap[m].rejected++;
+    }
+  });
+
+  const chartData = months.map(m => {
+    return monthlyMap[m] || { month: m, reviewed: 0, approved: 0, rejected: 0 };
+  });
+
+  return {
+    metrics: {
+      assigned: assignedCount,
+      approved: approvedCount,
+      rejected: rejectedCount,
+      underReview: underReviewCount,
+      awaitingDocs: awaitingDocsCount,
+      avgResolutionTime: avgResolutionTimeStr,
+      totalReviewed,
+      approvalRate,
+      rejectionRate,
+      claimsClosedThisMonth,
+      fraudCasesDetected
+    },
+    workload: {
+      openClaims,
+      underReview: underReviewCount,
+      awaitingDocs: awaitingDocsCount,
+      approvedToday,
+      rejectedToday
+    },
+    achievements,
+    activities,
+    chartData
+  };
+}

@@ -21,6 +21,9 @@ export interface IUser extends Document {
   employeeId?: string;
   specialization?: PolicyType;
   yearsOfExperience?: number;
+  bio?: string;
+  lastLoginAt?: Date;
+  passwordChangedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,6 +58,9 @@ const UserSchema = new Schema<IUser>(
       index: true 
     },
     yearsOfExperience: { type: Number },
+    bio: { type: String, default: '', trim: true },
+    lastLoginAt: { type: Date },
+    passwordChangedAt: { type: Date },
   },
   {
     timestamps: true,
