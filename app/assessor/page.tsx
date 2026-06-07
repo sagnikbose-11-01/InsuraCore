@@ -13,7 +13,7 @@ import { SerializedClaim, SerializedUser } from '@/types';
 import { 
   FileText, Clock, CheckCircle2, ShieldAlert, Timer, Ban, 
   AlertTriangle, Users, FileCheck, ArrowRight, Play, Eye, 
-  BarChart2, FileDown, Activity, FileSpreadsheet
+  BarChart2, FileDown, Activity, FileSpreadsheet, Bell
 } from 'lucide-react';
 import { 
   getAssessorDashboardMetrics, 
@@ -147,6 +147,13 @@ export default async function AssessorDashboard() {
           value={metrics.highRiskClaims}
           icon={ShieldAlert}
           iconClassName="text-rose-400"
+        />
+        <KpiCard
+          title="Customer Notifications Sent"
+          value={metrics.notificationsSent}
+          icon={Bell}
+          iconClassName="text-pink-400"
+          trend={{ value: 'Sent', isPositive: true }}
         />
       </div>
 

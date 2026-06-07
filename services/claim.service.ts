@@ -304,6 +304,11 @@ export async function requestClaimDocuments(
     assessorId: new mongoose.Types.ObjectId(assessorId),
     remarks: `Requested documents: ${requestedDocs.join(', ')}`,
     approvedAmount: 0,
+    assessorRemarks: remarks,
+    decisionReason: remarks,
+    decisionType: 'DOCUMENT_REQUESTED',
+    assessorName: assessor.name,
+    decisionTimestamp: new Date(),
   });
 
   const claimRef = `INS-${claim._id.toString().slice(-8).toUpperCase()}`;
@@ -448,6 +453,11 @@ export async function submitClaimDecision(
     latestAssessment.remarks = customerRemarks || 'Assessment completed';
     latestAssessment.approvedAmount = claim.approvedAmount;
     latestAssessment.reviewCompletedAt = new Date();
+    latestAssessment.assessorRemarks = customerRemarks;
+    latestAssessment.decisionReason = customerRemarks;
+    latestAssessment.decisionType = decision;
+    latestAssessment.assessorName = assessor.name;
+    latestAssessment.decisionTimestamp = new Date();
     await latestAssessment.save();
   } else {
     await ClaimAssessment.create({
@@ -456,7 +466,12 @@ export async function submitClaimDecision(
       remarks: customerRemarks || 'Assessment completed',
       approvedAmount: claim.approvedAmount,
       reviewStartedAt: new Date(Date.now() - 30 * 60 * 1000),
-      reviewCompletedAt: new Date()
+      reviewCompletedAt: new Date(),
+      assessorRemarks: customerRemarks,
+      decisionReason: customerRemarks,
+      decisionType: decision,
+      assessorName: assessor.name,
+      decisionTimestamp: new Date(),
     });
   }
 
@@ -638,6 +653,11 @@ export async function getClaimAssessments(claimId: string): Promise<SerializedCl
     assessmentDate: a.assessmentDate.toISOString(),
     reviewStartedAt: a.reviewStartedAt?.toISOString(),
     reviewCompletedAt: a.reviewCompletedAt?.toISOString(),
-    createdAt: a.createdAt.toISOString()
+    createdAt: a.createdAt.toISOString(),
+    assessorRemarks: a.assessorRemarks,
+    decisionReason: a.decisionReason,
+    decisionType: a.decisionType,
+    assessorName: a.assessorName,
+    decisionTimestamp: a.decisionTimestamp ? a.decisionTimestamp.toISOString() : undefined,
   }));
 }

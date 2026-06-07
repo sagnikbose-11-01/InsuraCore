@@ -7,7 +7,7 @@
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/session';
-import { getClaimById, getClaimDocuments } from '@/services/claim.service';
+import { getClaimById, getClaimDocuments, getClaimAssessments } from '@/services/claim.service';
 import { getPaymentByClaim } from '@/services/payment.service';
 import { DashboardShell } from '@/components/shared/DashboardShell';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -65,10 +65,11 @@ export default async function ClaimDetailPage({
 
   const { id } = await params;
 
-  const [claim, documents, payment] = await Promise.all([
+  const [claim, documents, payment, assessments] = await Promise.all([
     getClaimById(id),
     getClaimDocuments(id),
     getPaymentByClaim(id),
+    getClaimAssessments(id),
   ]);
 
   if (!claim) notFound();
@@ -79,6 +80,11 @@ export default async function ClaimDetailPage({
   const isRejected      = claim.status === ClaimStatus.REJECTED;
   const currentIdx      = STATUS_ORDER.indexOf(claim.status);
   const claimRef        = `INS-${claim._id.slice(-8).toUpperCase()}`;
+
+  // Find the latest assessment with a decision action
+  const latestAssessment = assessments && assessments.length > 0
+    ? [...assessments].reverse().find(a => a.decisionType)
+    : null;
 
   return (
     <DashboardShell>
@@ -165,6 +171,41 @@ export default async function ClaimDetailPage({
               )}
             </div>
           </Card>
+
+          {/* ── Latest Assessor Update ── */}
+          {latestAssessment && (
+            <Card className="border-[oklch(28%_0.10_230)] bg-[oklch(15%_0.04_230)]/30">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2.5 border-b border-[var(--color-base-800)] mb-4">
+                <CardTitle className="text-sm font-bold text-white flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-purple-400" />
+                  Latest Assessor Update
+                </CardTitle>
+                <span className="text-[10px] text-[var(--color-base-500)] font-semibold uppercase tracking-wider">
+                  Status: <strong className="text-purple-300 font-bold">{latestAssessment.decisionType?.replace('_', ' ')}</strong>
+                </span>
+              </CardHeader>
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-sm font-bold text-purple-400 flex-shrink-0">
+                  {latestAssessment.assessorName?.charAt(0).toUpperCase() || 'A'}
+                </div>
+                <div className="flex-1 min-w-0 space-y-3">
+                  <div>
+                    <h4 className="text-sm font-semibold text-white">
+                      {latestAssessment.assessorName || 'System Assessor'}
+                    </h4>
+                    <p className="text-[10px] text-[var(--color-base-500)] mt-0.5">
+                      Decision Date: {latestAssessment.decisionTimestamp ? formatDate(latestAssessment.decisionTimestamp) : '—'}
+                    </p>
+                  </div>
+                  {latestAssessment.assessorRemarks && (
+                    <div className="p-4 rounded-xl bg-[var(--color-base-950)] border border-[rgba(255,255,255,0.05)] italic text-sm text-[var(--color-base-300)] leading-relaxed whitespace-pre-line">
+                      "{latestAssessment.assessorRemarks}"
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Card>
+          )}
 
           {/* ── B. Claim Timeline ── */}
           <Card>

@@ -18,6 +18,7 @@ export interface INotification extends Document {
     rejectionReason?: string;
     requestedDocuments?: string[];
     assessorRemarks?: string;
+    assessorName?: string;
   };
   createdAt: Date;
   updatedAt: Date;
@@ -45,6 +46,7 @@ const NotificationSchema = new Schema<INotification>(
       rejectionReason: { type: String },
       requestedDocuments: { type: [String] },
       assessorRemarks: { type: String },
+      assessorName: { type: String },
     },
   },
   { timestamps: true }

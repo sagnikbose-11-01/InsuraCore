@@ -106,6 +106,11 @@ export interface SerializedClaimAssessment {
   assessmentDate: string;
   reviewStartedAt?: string;
   reviewCompletedAt?: string;
+  assessorRemarks?: string;
+  decisionReason?: string;
+  decisionType?: string;
+  assessorName?: string;
+  decisionTimestamp?: string;
   createdAt: string;
 }
 
@@ -133,6 +138,7 @@ export interface SerializedNotification {
     rejectionReason?: string;
     requestedDocuments?: string[];
     assessorRemarks?: string;
+    assessorName?: string;
   };
   createdAt: string;
 }

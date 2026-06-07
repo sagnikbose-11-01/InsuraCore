@@ -146,6 +146,12 @@ export async function getAssessorDashboardMetrics(assessorId: string) {
     status: { $in: [ClaimStatus.PENDING, ClaimStatus.SUBMITTED, ClaimStatus.UNDER_REVIEW, ClaimStatus.DOCUMENT_VERIFICATION] }
   });
 
+  // Count notifications sent (approvals, rejections, document requests)
+  const notificationsSent = await ClaimAuditLog.countDocuments({
+    assessorId,
+    action: { $in: ['APPROVED', 'REJECTED', 'DOCUMENT_REQUESTED'] }
+  });
+
   return {
     assignedClaims,
     underReview,
@@ -158,7 +164,8 @@ export async function getAssessorDashboardMetrics(assessorId: string) {
     customersServed: uniqueCustomersServed,
     documentsAwaitingVerification: assignedDocsAwaiting,
     highRiskClaims,
-    workloadCountToday
+    workloadCountToday,
+    notificationsSent
   };
 }
 

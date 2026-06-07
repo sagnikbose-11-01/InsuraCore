@@ -117,7 +117,9 @@ export function NotificationsList({ initialNotifications }: Props) {
                         </div>
                         {n.metadata.assessorRemarks && (
                           <div className="pt-2 border-t border-[rgba(255,255,255,0.04)]">
-                            <span className="text-[10px] text-[var(--color-base-500)] block mb-1">Assessor Remarks</span>
+                            <span className="text-[10px] text-[var(--color-base-500)] block mb-1">
+                              Assessor Remarks {n.metadata.assessorName ? `(by Assessor ${n.metadata.assessorName})` : ''}
+                            </span>
                             <p className="italic text-[var(--color-base-300)] font-medium bg-[var(--color-base-900)] p-2 rounded-lg">
                               "{n.metadata.assessorRemarks}"
                             </p>
@@ -144,7 +146,9 @@ export function NotificationsList({ initialNotifications }: Props) {
                         </div>
                         {n.metadata.assessorRemarks && (
                           <div>
-                            <span className="text-[10px] text-[var(--color-base-500)] block mb-1">Assessor Notes</span>
+                            <span className="text-[10px] text-[var(--color-base-500)] block mb-1">
+                              Assessor Notes {n.metadata.assessorName ? `(by Assessor ${n.metadata.assessorName})` : ''}
+                            </span>
                             <p className="italic text-[var(--color-base-300)] font-medium bg-[var(--color-base-900)] p-2 rounded-lg">
                               "{n.metadata.assessorRemarks}"
                             </p>
@@ -173,7 +177,9 @@ export function NotificationsList({ initialNotifications }: Props) {
                         )}
                         {n.metadata.assessorRemarks && (
                           <div className="pt-2 border-t border-[rgba(255,255,255,0.04)]">
-                            <span className="text-[10px] text-[var(--color-base-500)] block mb-1">Remarks / Remarks</span>
+                            <span className="text-[10px] text-[var(--color-base-500)] block mb-1">
+                              Remarks {n.metadata.assessorName ? `(by Assessor ${n.metadata.assessorName})` : ''}
+                            </span>
                             <p className="italic text-[var(--color-base-300)] font-medium bg-[var(--color-base-900)] p-2 rounded-lg">
                               "{n.metadata.assessorRemarks}"
                             </p>
