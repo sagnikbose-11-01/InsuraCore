@@ -107,7 +107,7 @@ export async function getAssessorWorkQueue(assessorId: string, limit = 5) {
 
   const claims = await Claim.find({
     purchasedPolicyId: { $in: purchasedPolicyIds },
-    status: { $in: [ClaimStatus.PENDING, ClaimStatus.UNDER_REVIEW] },
+    status: { $in: [ClaimStatus.PENDING, ClaimStatus.SUBMITTED, ClaimStatus.UNDER_REVIEW, ClaimStatus.DOCUMENT_VERIFICATION] },
     $or: [
       { assignedAssessorId: assessorId },
       { assignedAssessorId: null }
@@ -115,7 +115,11 @@ export async function getAssessorWorkQueue(assessorId: string, limit = 5) {
   })
     .sort({ riskScore: -1, priority: 1, createdAt: 1 }) // Highest risk and priority first
     .limit(limit)
-    .populate('customerId', 'name')
+    .populate('customerId', 'name email phone')
+    .populate({
+      path: 'purchasedPolicyId',
+      populate: { path: 'policyId', select: 'name type coverageAmount' }
+    })
     .lean();
 
   return claims;
@@ -143,10 +147,41 @@ export async function getAssessorReviewQueue(assessorId: string, filters: any = 
 
   const claims = await Claim.find(query)
     .sort({ createdAt: -1 })
-    .populate('customerId', 'name')
+    .populate('customerId', 'name email phone')
+    .populate({
+      path: 'purchasedPolicyId',
+      populate: { path: 'policyId', select: 'name type coverageAmount' }
+    })
     .lean();
 
   return claims;
+}
+
+/**
+ * Retrieves a single claim fully populated for the Review Page.
+ * Verifies that the claim falls within the assessor's specialization.
+ */
+export async function getAssessorClaimDetail(assessorId: string, claimId: string) {
+  const assessor = await getAssessorContext(assessorId);
+  const purchasedPolicyIds = await getSpecializationPurchasedPolicyIds(assessor.specialization as PolicyType);
+
+  const claim = await Claim.findOne({
+    _id: claimId,
+    purchasedPolicyId: { $in: purchasedPolicyIds }
+  })
+    .populate('customerId', 'name email phone avatar address dob')
+    .populate({
+      path: 'purchasedPolicyId',
+      populate: { path: 'policyId', select: 'name type coverageAmount description validityPeriod' }
+    })
+    .lean();
+
+  if (!claim) {
+    throw new Error('Claim not found or you do not have permission to view it.');
+  }
+
+  // TODO: Populate documents and assessment history if we had those collections fully defined
+  return claim;
 }
 
 /**

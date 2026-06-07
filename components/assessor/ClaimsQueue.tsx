@@ -33,6 +33,15 @@ export async function ClaimsQueue({ claimsPromise }: { claimsPromise?: Promise<a
     return <ShieldAlert className="w-3.5 h-3.5 text-blue-400" />;
   };
 
+  const calculatePriority = (claim: any) => {
+    if (claim.priority) return claim.priority;
+    const amount = claim.claimAmount || 0;
+    const risk = claim.riskScore || 0;
+    if (amount > 1000000 || risk >= 80) return 'High';
+    if (amount > 100000 || risk >= 40) return 'Medium';
+    return 'Low';
+  };
+
   return (
     <div className="glass-card overflow-hidden">
       <div className="px-6 py-5 border-b border-[rgba(255,255,255,0.06)] flex items-center justify-between">
@@ -60,13 +69,17 @@ export async function ClaimsQueue({ claimsPromise }: { claimsPromise?: Promise<a
             </tr>
           </thead>
           <tbody>
-            {claims.map((claim: any) => (
+            {claims.map((claim: any) => {
+              const priority = calculatePriority(claim);
+              const policyType = claim.policyType || claim.purchasedPolicyId?.policyId?.type || claim.type || 'UNKNOWN';
+
+              return (
               <tr key={claim._id || claim.id} className="group cursor-default">
                 <td className="font-mono text-xs font-semibold text-white">{claim._id || claim.id}</td>
                 <td className="font-medium text-white">{claim.customerId?.name || claim.holder}</td>
                 <td>
                   <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--color-base-300)] bg-[var(--color-base-800)] px-2 py-0.5 rounded border border-[var(--color-base-700)]">
-                    {claim.policyType || claim.type}
+                    {policyType}
                   </span>
                 </td>
                 <td className="font-mono text-xs font-semibold">₹{claim.claimAmount?.toLocaleString('en-IN') || claim.amount}</td>
@@ -80,21 +93,22 @@ export async function ClaimsQueue({ claimsPromise }: { claimsPromise?: Promise<a
                   </div>
                 </td>
                 <td>
-                  <span className={cn("px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase rounded-md border", getPriorityColor(claim.priority))}>
-                    {claim.priority}
+                  <span className={cn("px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase rounded-md border", getPriorityColor(priority))}>
+                    {priority}
                   </span>
                 </td>
                 <td className="text-[var(--color-base-300)]">{claim.status}</td>
                 <td className="text-right">
                   <Link 
                     href={`/assessor/claims/${claim._id || claim.id}`}
-                    className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-500/10 text-purple-400 hover:bg-purple-500 hover:text-white transition-all opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0"
+                    className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-500/10 text-purple-400 hover:bg-purple-500 hover:text-white transition-all"
                   >
                     Review
                   </Link>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

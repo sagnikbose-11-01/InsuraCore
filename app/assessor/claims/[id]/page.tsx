@@ -12,14 +12,28 @@ import { ClaimDetailsCard } from '@/components/assessor/ClaimDetailsCard';
 import { FraudScoreCard } from '@/components/assessor/FraudScoreCard';
 import { DocumentViewer } from '@/components/assessor/DocumentViewer';
 import { ActivityFeed } from '@/components/assessor/ActivityFeed';
+import { getSession } from '@/lib/auth/session';
+import { getAssessorClaimDetail } from '@/services/assessor.service';
+import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
   title: 'Claim Review | Assessor Workspace',
 };
 
 export default async function ClaimReviewPage({ params }: { params: Promise<{ id: string }> }) {
+  const session = await getSession();
+  if (!session) redirect('/auth/login');
+
   const resolvedParams = await params;
-  const id = resolvedParams.id || 'CLM-9821';
+  const id = resolvedParams.id;
+
+  let claim;
+  try {
+    claim = await getAssessorClaimDetail(session.id, id);
+  } catch (error) {
+    // If claim not found or unauthorized, redirect back to reviews
+    redirect('/assessor/reviews');
+  }
 
   return (
     <div className="space-y-6 animate-fade-in pb-20">
@@ -40,7 +54,7 @@ export default async function ClaimReviewPage({ params }: { params: Promise<{ id
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column (Main Content) */}
         <div className="lg:col-span-8 space-y-6">
-          <ClaimDetailsCard claimId={id} />
+          <ClaimDetailsCard claim={claim} />
           
           {/* Assessor Actions Box */}
           <div className="glass-card p-6">
@@ -71,7 +85,7 @@ export default async function ClaimReviewPage({ params }: { params: Promise<{ id
 
         {/* Right Column (Sidebar widgets) */}
         <div className="lg:col-span-4 space-y-6">
-          <FraudScoreCard score={82} />
+          <FraudScoreCard score={claim.riskScore || 0} />
           <DocumentViewer />
           <ActivityFeed />
         </div>
