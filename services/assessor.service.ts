@@ -13,7 +13,7 @@ import ClaimDocument from '@/models/ClaimDocument';
 import Policy from '@/models/Policy';
 import PurchasedPolicy from '@/models/PurchasedPolicy';
 import ClaimAuditLog from '@/models/ClaimAuditLog';
-import { ClaimStatus, PolicyType, UserRole } from '@/lib/constants/enums';
+import { ClaimStatus, PolicyType, UserRole, DocumentStatus } from '@/lib/constants/enums';
 
 /**
  * Helper to get the assessor and enforce they exist and have a specialization.
@@ -91,7 +91,7 @@ export async function getAssessorDashboardMetrics(assessorId: string) {
     Claim.countDocuments({ ...baseQuery, riskScore: { $gte: 75 }, status: { $nin: [ClaimStatus.APPROVED, ClaimStatus.REJECTED, ClaimStatus.PAID] } }),
     // Claim documents awaiting verification on claims assigned to them
     ClaimDocument.countDocuments({
-      verificationStatus: 'UPLOADED',
+      verificationStatus: DocumentStatus.UPLOADED,
     })
   ]);
 
@@ -104,7 +104,7 @@ export async function getAssessorDashboardMetrics(assessorId: string) {
   // 3. Documents awaiting verification specifically for their assigned claims
   const assignedDocsAwaiting = await ClaimDocument.countDocuments({
     claimId: { $in: claimIds },
-    verificationStatus: 'UPLOADED'
+    verificationStatus: DocumentStatus.UPLOADED
   });
 
   // 4. Calculate average resolution time
@@ -500,7 +500,7 @@ export async function getAssessorPerformanceMetrics(assessorId: string) {
   
   docsVerifiedCount = await ClaimDocument.countDocuments({
     claimId: { $in: claimIds },
-    verificationStatus: 'VERIFIED'
+    verificationStatus: DocumentStatus.VERIFIED
   });
 
   const monthlyMap: Record<string, { month: string; reviewed: number; approved: number; rejected: number }> = {};
