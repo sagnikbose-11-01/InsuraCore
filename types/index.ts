@@ -4,7 +4,7 @@
 // and UI props used across the entire application.
 // ============================================================
 
-import { ClaimStatus, DocumentStatus, PaymentStatus, PolicyStatus, PolicyType, UserRole } from '@/lib/constants/enums';
+import { ClaimStatus, DocumentStatus, PaymentStatus, PolicyStatus, PolicyType, UserRole, PriorityLevel } from '@/lib/constants/enums';
 
 // ---- Server Action Response Shape ----
 export interface ActionResponse<T = undefined> {
@@ -57,6 +57,14 @@ export interface SerializedPurchasedPolicy {
   createdAt: string;
 }
 
+export interface SerializedClaimNote {
+  authorId: string;
+  authorName: string;
+  text: string;
+  isInternal: boolean;
+  createdAt: string;
+}
+
 export interface SerializedClaim {
   _id: string;
   purchasedPolicyId: string | SerializedPurchasedPolicy;
@@ -68,6 +76,11 @@ export interface SerializedClaim {
   approvedAmount: number;
   assignedAssessorId: string | SerializedUser | null;
   status: ClaimStatus;
+  policyType: PolicyType;
+  priority: PriorityLevel;
+  riskScore: number;
+  fraudFlags: string[];
+  notes?: SerializedClaimNote[];
   createdAt: string;
   updatedAt: string;
 }
@@ -78,6 +91,18 @@ export interface SerializedClaimDocument {
   documentName: string;
   documentUrl: string;
   verificationStatus: DocumentStatus;
+  createdAt: string;
+}
+
+export interface SerializedClaimAssessment {
+  _id: string;
+  claimId: string;
+  assessorId: string | { _id: string; name: string };
+  remarks: string;
+  approvedAmount: number;
+  assessmentDate: string;
+  reviewStartedAt?: string;
+  reviewCompletedAt?: string;
   createdAt: string;
 }
 
@@ -97,6 +122,15 @@ export interface SerializedNotification {
   userId: string;
   message: string;
   isRead: boolean;
+  title?: string;
+  claimId?: string;
+  metadata?: {
+    type?: string;
+    approvedAmount?: number;
+    rejectionReason?: string;
+    requestedDocuments?: string[];
+    assessorRemarks?: string;
+  };
   createdAt: string;
 }
 

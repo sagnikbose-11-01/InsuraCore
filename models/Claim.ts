@@ -8,6 +8,14 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import { ClaimStatus, PolicyType, PriorityLevel } from '@/lib/constants/enums';
 
+export interface IClaimNote {
+  authorId: mongoose.Types.ObjectId;
+  authorName: string;
+  text: string;
+  isInternal: boolean;
+  createdAt: Date;
+}
+
 export interface IClaim extends Document {
   purchasedPolicyId: mongoose.Types.ObjectId;
   customerId: mongoose.Types.ObjectId;        // Denormalized for performance
@@ -24,6 +32,7 @@ export interface IClaim extends Document {
   priority: PriorityLevel;
   riskScore: number;
   fraudFlags: string[];
+  notes: IClaimNote[];
 
   createdAt: Date;
   updatedAt: Date;
@@ -75,6 +84,16 @@ const ClaimSchema = new Schema<IClaim>(
     },
     riskScore: { type: Number, default: 0, min: 0, max: 100 },
     fraudFlags: { type: [String], default: [] },
+    notes: {
+      type: [{
+        authorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        authorName: { type: String, required: true },
+        text: { type: String, required: true },
+        isInternal: { type: Boolean, required: true, default: true },
+        createdAt: { type: Date, default: Date.now }
+      }],
+      default: []
+    }
   },
   { timestamps: true }
 );

@@ -1,16 +1,11 @@
-// ============================================================
-// components/assessor/AssessorNavbar.tsx
-// Top navigation for the Assessor Workspace.
-// Contains search, notifications, theme toggle, and profile.
-// ============================================================
-
 import React from 'react';
 import { Search, Bell } from 'lucide-react';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { UserNav } from '@/components/auth/UserNav';
 import { JWTPayload } from '@/lib/auth/jwt';
+import Link from 'next/link';
 
-export function AssessorNavbar({ session }: { session: JWTPayload }) {
+export function AssessorNavbar({ session, unreadCount = 0 }: { session: JWTPayload; unreadCount?: number }) {
   return (
     <header className="h-16 border-b border-[rgba(255,255,255,0.06)] bg-[var(--color-base-950)]/60 backdrop-blur-xl flex items-center justify-between px-6 sticky top-0 z-40">
       {/* Global Search */}
@@ -35,10 +30,17 @@ export function AssessorNavbar({ session }: { session: JWTPayload }) {
 
       {/* Right Actions */}
       <div className="flex items-center gap-4 ml-6">
-        <button className="relative p-2 rounded-full hover:bg-[var(--color-base-800)] text-[var(--color-base-400)] hover:text-white transition-colors">
+        <Link 
+          href="/assessor/notifications"
+          className="relative p-2 rounded-full hover:bg-[var(--color-base-800)] text-[var(--color-base-400)] hover:text-white transition-colors"
+        >
           <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border-2 border-[var(--color-base-950)]" />
-        </button>
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-[var(--color-base-950)] animate-pulse">
+              {unreadCount}
+            </span>
+          )}
+        </Link>
         <ThemeToggle />
         <div className="w-px h-6 bg-[rgba(255,255,255,0.06)] mx-1" />
         <UserNav session={session} />

@@ -11,6 +11,10 @@ import {
   assignAssessor,
   submitAssessment,
   updateDocumentStatus,
+  startClaimReview,
+  requestClaimDocuments,
+  addClaimNote,
+  submitClaimDecision,
 } from '@/services/claim.service';
 import { releasePayment, createPaymentForClaim as createPaymentService } from '@/services/payment.service';
 import { CreateClaimSchema, AssessmentSchema, AssignAssessorSchema } from '@/lib/validators/claim.validators';
@@ -85,6 +89,8 @@ export async function submitAssessmentAction(formData: FormData): Promise<Action
     decision: formData.get('decision') as 'APPROVED' | 'REJECTED',
   };
 
+  const internalRemarks = (formData.get('internalRemarks') as string) || '';
+
   const parsed = AssessmentSchema.safeParse(raw);
   if (!parsed.success) {
     return {
@@ -95,9 +101,84 @@ export async function submitAssessmentAction(formData: FormData): Promise<Action
   }
 
   try {
-    const claim = await submitAssessment(session.id, parsed.data);
+    const claim = await submitClaimDecision(
+      parsed.data.claimId,
+      session.id,
+      parsed.data.decision,
+      parsed.data.approvedAmount,
+      parsed.data.remarks,
+      internalRemarks
+    );
     revalidatePath('/assessor/claims');
+    revalidatePath('/assessor/reviews');
+    revalidatePath(`/assessor/claims/${parsed.data.claimId}`);
     return { success: true, message: `Claim ${raw.decision.toLowerCase()} successfully!`, data: claim };
+  } catch (err) {
+    return { success: false, message: (err as Error).message };
+  }
+}
+
+export async function startClaimReviewAction(claimId: string): Promise<ActionResponse<SerializedClaim>> {
+  const session = await getSession();
+  if (!session || session.role !== UserRole.ASSESSOR) {
+    return { success: false, message: 'Unauthorized' };
+  }
+
+  try {
+    const claim = await startClaimReview(claimId, session.id);
+    revalidatePath('/assessor/claims');
+    revalidatePath('/assessor/reviews');
+    revalidatePath(`/assessor/claims/${claimId}`);
+    return { success: true, message: 'Review started successfully!', data: claim };
+  } catch (err) {
+    return { success: false, message: (err as Error).message };
+  }
+}
+
+export async function requestClaimDocumentsAction(
+  claimId: string,
+  requestedDocs: string[],
+  remarks: string
+): Promise<ActionResponse<SerializedClaim>> {
+  const session = await getSession();
+  if (!session || session.role !== UserRole.ASSESSOR) {
+    return { success: false, message: 'Unauthorized' };
+  }
+
+  if (requestedDocs.length === 0) {
+    return { success: false, message: 'Please select at least one document to request.' };
+  }
+
+  try {
+    const claim = await requestClaimDocuments(claimId, session.id, requestedDocs, remarks);
+    revalidatePath('/assessor/claims');
+    revalidatePath('/assessor/reviews');
+    revalidatePath(`/assessor/claims/${claimId}`);
+    return { success: true, message: 'Documents requested successfully!', data: claim };
+  } catch (err) {
+    return { success: false, message: (err as Error).message };
+  }
+}
+
+export async function addClaimNoteAction(
+  claimId: string,
+  text: string,
+  isInternal: boolean
+): Promise<ActionResponse<SerializedClaim>> {
+  const session = await getSession();
+  if (!session || session.role !== UserRole.ASSESSOR) {
+    return { success: false, message: 'Unauthorized' };
+  }
+
+  if (!text || text.trim().length < 5) {
+    return { success: false, message: 'Note must be at least 5 characters long.' };
+  }
+
+  try {
+    const claim = await addClaimNote(claimId, session.id, text, isInternal);
+    revalidatePath(`/assessor/claims/${claimId}`);
+    revalidatePath('/assessor/reviews');
+    return { success: true, message: 'Note added successfully!', data: claim };
   } catch (err) {
     return { success: false, message: (err as Error).message };
   }

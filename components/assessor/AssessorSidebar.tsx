@@ -8,7 +8,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, FileText, CheckSquare, BarChart3, User, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, FileText, CheckSquare, BarChart3, User, Settings, LogOut, Bell, Users, History, FileSpreadsheet, Award } from 'lucide-react';
 import { logoutAction } from '@/app/actions/auth.actions';
 import { cn } from '@/lib/utils';
 
@@ -16,6 +16,11 @@ const NAV_LINKS = [
   { href: '/assessor', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/assessor/claims', label: 'Work Queue', icon: FileText },
   { href: '/assessor/reviews', label: 'Review Center', icon: CheckSquare },
+  { href: '/assessor/customers', label: 'Customer Directory', icon: Users },
+  { href: '/assessor/history', label: 'Claim History', icon: History },
+  { href: '/assessor/notifications', label: 'Notifications', icon: Bell },
+  { href: '/assessor/performance', label: 'My Performance', icon: Award },
+  { href: '/assessor/reports', label: 'Reports', icon: FileSpreadsheet },
   { href: '/assessor/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/assessor/profile', label: 'Profile', icon: User },
   { href: '/assessor/settings', label: 'Settings', icon: Settings },

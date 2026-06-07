@@ -30,12 +30,26 @@ export async function markAllNotificationsAsRead(userId: string): Promise<void> 
   await Notification.updateMany({ userId, isRead: false }, { isRead: true });
 }
 
+export async function getUnreadNotificationCount(userId: string): Promise<number> {
+  await connectDB();
+  return Notification.countDocuments({ userId, isRead: false });
+}
+
 function serializeNotification(notif: INotification): SerializedNotification {
   return {
     _id: notif._id.toString(),
     userId: notif.userId.toString(),
     message: notif.message,
     isRead: notif.isRead,
+    title: notif.title,
+    claimId: notif.claimId?.toString(),
+    metadata: notif.metadata ? {
+      type: notif.metadata.type,
+      approvedAmount: notif.metadata.approvedAmount,
+      rejectionReason: notif.metadata.rejectionReason,
+      requestedDocuments: notif.metadata.requestedDocuments,
+      assessorRemarks: notif.metadata.assessorRemarks,
+    } : undefined,
     createdAt: notif.createdAt.toISOString(),
   };
 }
