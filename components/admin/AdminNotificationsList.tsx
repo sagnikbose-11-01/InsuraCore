@@ -79,9 +79,9 @@ export function AdminNotificationsList({ initialNotifications }: Props) {
       (isReadFilter === 'READ' && n.isRead);
 
     const matchesSearch =
-      n.title.toLowerCase().includes(search.toLowerCase()) ||
-      n.message.toLowerCase().includes(search.toLowerCase()) ||
-      n.userId?.name.toLowerCase().includes(search.toLowerCase());
+      (n.title?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
+      (n.message?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
+      (n.userId?.name?.toLowerCase().includes(search.toLowerCase()) ?? false);
 
     return matchesRead && matchesSearch;
   });
