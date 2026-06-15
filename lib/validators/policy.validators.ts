@@ -25,7 +25,7 @@ export const CreatePolicySchema = z.object({
 
 export const AssessorCreatePolicySchema = CreatePolicySchema.extend({
   type: z.nativeEnum(PolicyType, {
-    errorMap: () => ({ message: 'Assessor policy type must exactly match assessor specialization.' })
+    error: 'Assessor policy type must exactly match assessor specialization.',
   }),
 });
 

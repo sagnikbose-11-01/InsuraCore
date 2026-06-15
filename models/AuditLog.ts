@@ -17,7 +17,11 @@ export type AuditAction =
   | 'DOCUMENT_REQUESTED'
   | 'PAYMENT_RELEASED'
   | 'NOTE_ADDED'
-  | 'CUSTOMER_RESPONDED';
+  | 'CUSTOMER_RESPONDED'
+  | 'CREATE_POLICY'
+  | 'UPDATE_POLICY'
+  | 'APPROVE_POLICY'
+  | 'REJECT_POLICY';
 
 export interface IAuditLog extends Document {
   actorId: mongoose.Types.ObjectId;
@@ -63,6 +67,10 @@ const AuditLogSchema = new Schema<IAuditLog>(
         'PAYMENT_RELEASED',
         'NOTE_ADDED',
         'CUSTOMER_RESPONDED',
+        'CREATE_POLICY',
+        'UPDATE_POLICY',
+        'APPROVE_POLICY',
+        'REJECT_POLICY',
       ],
       required: true,
       index: true,

@@ -7,6 +7,7 @@
 import PurchasedPolicy from '@/models/PurchasedPolicy';
 import { IPolicy } from '@/models/Policy';
 import { SerializedPolicy, SerializedPurchasedPolicy } from '@/types';
+import { PolicyListingStatus } from '@/lib/constants/enums';
 
 export function serializePolicy(policy: IPolicy): SerializedPolicy {
   return {
@@ -18,7 +19,16 @@ export function serializePolicy(policy: IPolicy): SerializedPolicy {
     coverageAmount: policy.coverageAmount,
     validityPeriod: policy.validityPeriod,
     eligibility: policy.eligibility,
-    isActive: policy.isActive,
+    isActive: policy.status === PolicyListingStatus.ACTIVE,
+    status: policy.status,
+    benefits: policy.benefits,
+    exclusions: policy.exclusions,
+    waitingPeriod: policy.waitingPeriod,
+    maximumClaimAmount: policy.maximumClaimAmount,
+    requiredDocuments: policy.requiredDocuments,
+    riskCategory: policy.riskCategory,
+    termsAndConditions: policy.termsAndConditions,
+    approvalHistory: policy.approvalHistory,
     createdAt: policy.createdAt.toISOString(),
     // Optional assessor ownership
     createdByAssessorId: policy.createdByAssessorId?.toString() ?? null,

@@ -62,10 +62,10 @@ export function AssessorPolicyWizard({ specialization, onSuccess }: Props) {
 
       const result = await createAssessorPolicyAction(data);
       if (result.success) {
-        toast.success(result.message);
+        toast(result.message, 'success');
         onSuccess();
       } else {
-        toast.error(result.message);
+        toast(result.message, 'error');
       }
     });
   };
