@@ -4,7 +4,7 @@
 // and UI props used across the entire application.
 // ============================================================
 
-import { ClaimStatus, DocumentStatus, PaymentStatus, PolicyStatus, PolicyType, UserRole, PriorityLevel } from '@/lib/constants/enums';
+import { ClaimStatus, DocumentStatus, PaymentStatus, PolicyStatus, PolicyType, UserRole, PriorityLevel, PolicyListingStatus } from '@/lib/constants/enums';
 
 // ---- Server Action Response Shape ----
 export interface ActionResponse<T = undefined> {
@@ -47,9 +47,18 @@ export interface SerializedPolicy {
   validityPeriod: number;
   eligibility: string[];
   isActive: boolean;
+  status?: PolicyListingStatus;
+  benefits?: string[];
+  exclusions?: string[];
+  waitingPeriod?: number;
+  maximumClaimAmount?: number;
+  requiredDocuments?: string[];
+  riskCategory?: string;
+  termsAndConditions?: string;
+  approvalHistory?: any[];
   createdAt: string;
   // Optional assessor ownership
-  createdByAssessorId?: string | null;
+  createdByAssessorId?: string | null | any;
   createdByName?: string | null;
   createdBySpecialization?: string | null;
 }
