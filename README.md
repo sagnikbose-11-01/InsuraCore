@@ -83,5 +83,10 @@ The easiest way to deploy your InsuraCore app is to use the [Vercel Platform](ht
 
 *(Make sure your MongoDB cluster's network access allows connections from `0.0.0.0/0` so Vercel can connect dynamically).*
 
+5. **Seed the Database**
+   Once your app is deployed (or while running locally), you can populate the marketplace with default policies by simply navigating to:
+   `https://your-deployment-url.vercel.app/api/seed` (or `http://localhost:3000/api/seed` locally).
+   *Note: The seed script will only run if there are 0 policies in your database, preventing accidental duplicates.*
+
 ## 📄 License
 This project is open-source and available under the [MIT License](LICENSE).
