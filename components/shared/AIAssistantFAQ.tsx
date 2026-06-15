@@ -163,7 +163,9 @@ export function AIAssistantFAQ() {
 
   // Auto-scroll chat history
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatHistory.length > 1 || isTyping) {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [chatHistory, isTyping]);
 
   const handleInputChange = (val: string) => {
