@@ -173,6 +173,8 @@ export default async function AssessorPolicyDetailsPage({ params }: Props) {
                 </div>
               </section>
             </div>
+          </div>
+        </div>
       </div>
     </div>
   );
