@@ -1,122 +1,129 @@
 'use client';
 // ============================================================
 // components/landing/FeaturesSection.tsx
-// Redesigned premium features grid.
-// Glass cards with glowing border gradients and staggered entrance motion.
+// Grid of glass feature cards with glowing gradient borders and micro-interactions.
 // ============================================================
 
 import React from 'react';
-import { motion, useInView, Variants } from 'framer-motion';
-import { ShieldCheck, FileText, BarChart3, TrendingUp, Zap, Users } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ShieldAlert, Zap, FileSearch, Layers, Network, Lock, PieChart, Wallet } from 'lucide-react';
 
 const FEATURES = [
   {
-    icon: <ShieldCheck className="w-5 h-5 text-[oklch(72%_0.20_230)]" />,
-    title: 'Smart Policy Portfolio',
-    description: 'Browse, compare, and purchase tailored insurance coverage items with a unified, real-time portfolio management dashboard.',
-    glow: 'from-[oklch(58%_0.22_230_/_0.15)] to-transparent',
+    icon: Zap,
+    title: 'AI-Powered Claim Assistance',
+    desc: 'Automate initial claim reviews with our intelligent engine. Extract data from medical bills instantly.',
+    color: 'from-[var(--color-brand-400)] to-[var(--color-brand-600)]',
+    iconColor: 'text-[var(--color-brand-400)]'
   },
   {
-    icon: <FileText className="w-5 h-5 text-[oklch(72%_0.17_150)]" />,
-    title: 'Instant Guided Claims',
-    description: 'File complete claims within minutes using our interactive multi-step guided wizard. Track document audits in real time.',
-    glow: 'from-[oklch(60%_0.15_150_/_0.15)] to-transparent',
+    icon: Network,
+    title: 'Real-Time Claim Tracking',
+    desc: 'Full visibility for policyholders. Track every state transition from submission to final payout.',
+    color: 'from-blue-400 to-indigo-600',
+    iconColor: 'text-blue-400'
   },
   {
-    icon: <BarChart3 className="w-5 h-5 text-[oklch(78%_0.18_75)]" />,
-    title: 'Expert Appraiser Audits',
-    description: 'All claims are routed to specialized independent assessors, ensuring bias-free review and regulatory compliance.',
-    glow: 'from-[oklch(65%_0.15_75_/_0.15)] to-transparent',
+    icon: Layers,
+    title: 'Role-Based Workspaces',
+    desc: 'Dedicated interfaces optimized for Customers, Assessors, and Administrators to maximize efficiency.',
+    color: 'from-purple-400 to-fuchsia-600',
+    iconColor: 'text-purple-400'
   },
   {
-    icon: <TrendingUp className="w-5 h-5 text-[oklch(65%_0.20_25)]" />,
-    title: 'Real-time Pipeline Analytics',
-    description: 'Track claim volume, approval rates, average payout amounts, and settlement times with professional dashboards.',
-    glow: 'from-[oklch(55%_0.18_25_/_0.15)] to-transparent',
+    icon: ShieldAlert,
+    title: 'Intelligent Fraud Detection',
+    desc: 'Cross-reference documents against historical anomalies and flag suspicious claims before assessor review.',
+    color: 'from-rose-400 to-red-600',
+    iconColor: 'text-rose-400'
   },
   {
-    icon: <Zap className="w-5 h-5 text-[oklch(72%_0.15_260)]" />,
-    title: 'Electrical Direct Settlements',
-    description: 'Approved audits trigger automated payout vouchers. Track funds transparently from assessor verification to bank credit.',
-    glow: 'from-[oklch(58%_0.15_260_/_0.15)] to-transparent',
+    icon: FileSearch,
+    title: 'Document Verification',
+    desc: 'Securely upload, parse, and verify invoices and diagnostic reports with our encrypted storage vault.',
+    color: 'from-emerald-400 to-green-600',
+    iconColor: 'text-emerald-400'
   },
   {
-    icon: <Users className="w-5 h-5 text-[oklch(72%_0.20_230)]" />,
-    title: 'Granular Workspace RBAC',
-    description: 'Role-based security dashboards tailored specifically for claimants, verification appraisers, and platform admins.',
-    glow: 'from-[oklch(58%_0.22_230_/_0.15)] to-transparent',
+    icon: Wallet,
+    title: 'Policy Marketplace',
+    desc: 'Browse, compare, and instantly purchase comprehensive coverage tailored to your specific needs.',
+    color: 'from-amber-400 to-orange-600',
+    iconColor: 'text-amber-400'
   },
+  {
+    icon: Lock,
+    title: 'Automated Settlements',
+    desc: 'Once approved, trigger instantaneous bank transfers directly to the policyholder’s registered account.',
+    color: 'from-sky-400 to-cyan-600',
+    iconColor: 'text-sky-400'
+  },
+  {
+    icon: PieChart,
+    title: 'Analytics & Reporting',
+    desc: 'Enterprise-grade dashboards tracking approval rates, assessor efficiency, and payout volumes.',
+    color: 'from-pink-400 to-rose-600',
+    iconColor: 'text-pink-400'
+  }
 ];
 
 export function FeaturesSection() {
-  const ref = React.useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-100px' });
-
-  const containerVariants: Variants = {
-    hidden: {},
-    visible: {
-      transition: {
-        staggerChildren: 0.08,
-      },
-    },
-  };
-
-  const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { type: 'spring', stiffness: 260, damping: 20 },
-    },
-  };
-
   return (
-    <section id="features" ref={ref} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 scroll-mt-16 relative">
-      <div className="text-center mb-16 space-y-4">
-        <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-          Everything You Need to Manage Claims
-        </h2>
-        <p className="text-sm sm:text-base text-[var(--color-base-500)] max-w-xl mx-auto">
-          A premium unified workspace engineered for customers, assessors, and administrators.
-        </p>
-      </div>
+    <section id="features" className="relative py-24 sm:py-32 bg-[var(--color-base-950)] overflow-hidden">
+      {/* Background gradients */}
+      <div className="absolute top-0 right-[10%] w-[600px] h-[600px] bg-[radial-gradient(circle,oklch(58%_0.22_230_/_0.03)_0%,transparent_60%)] blur-[80px]" />
+      <div className="absolute bottom-0 left-[10%] w-[600px] h-[600px] bg-[radial-gradient(circle,oklch(40%_0.15_270_/_0.03)_0%,transparent_60%)] blur-[80px]" />
 
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate={isInView ? 'visible' : 'hidden'}
-        className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
-      >
-        {FEATURES.map((f) => (
-          <motion.div
-            key={f.title}
-            variants={itemVariants}
-            whileHover={{ y: -6, borderColor: 'rgba(255, 255, 255, 0.12)' }}
-            className="group relative rounded-2xl border border-[rgba(255,255,255,0.04)] bg-[rgba(255,255,255,0.02)] backdrop-blur-xl p-6 transition-all duration-300 overflow-hidden flex flex-col justify-between"
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-24">
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-100px' }}
+            className="text-4xl sm:text-5xl font-black text-white tracking-tight mb-6"
           >
-            {/* Radial glow background on hover */}
-            <div className={`absolute inset-0 bg-gradient-to-b ${f.glow} opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`} />
+            Enterprise-grade capabilities.<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-base-400)] to-white">Zero technical debt.</span>
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-100px' }}
+            transition={{ delay: 0.1 }}
+            className="text-lg text-[var(--color-base-400)]"
+          >
+            Built on a modern tech stack to ensure reliability, security, and lightning-fast performance across every workflow.
+          </motion.p>
+        </div>
 
-            <div>
-              {/* Icon Container with hover zoom */}
-              <div className="w-11 h-11 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-[rgba(255,255,255,0.05)] transition-all duration-300">
-                {f.icon}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {FEATURES.map((feature, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-50px' }}
+              transition={{ duration: 0.5, delay: idx * 0.05 }}
+              className="group relative p-[1px] rounded-2xl bg-white/[0.05] hover:bg-transparent transition-colors overflow-hidden"
+            >
+              {/* Animated gradient border on hover */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+              
+              <div className="relative h-full bg-[#0A0A0A] p-6 rounded-[15px] border border-transparent group-hover:border-white/10 transition-colors z-10 flex flex-col">
+                <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <feature.icon className={`w-6 h-6 ${feature.iconColor}`} />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-3 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-br group-hover:from-white group-hover:to-white/70 transition-colors">
+                  {feature.title}
+                </h3>
+                <p className="text-sm text-[var(--color-base-400)] leading-relaxed flex-1">
+                  {feature.desc}
+                </p>
               </div>
-
-              {/* Title & Description */}
-              <h3 className="text-base font-bold text-white mb-2.5 tracking-tight group-hover:text-[var(--color-brand-300)] transition-colors">
-                {f.title}
-              </h3>
-              <p className="text-xs text-[var(--color-base-500)] leading-relaxed">
-                {f.description}
-              </p>
-            </div>
-
-            {/* Tiny stylized accent dot */}
-            <div className="w-1.5 h-1.5 rounded-full bg-[rgba(255,255,255,0.1)] group-hover:bg-[var(--color-brand-400)] transition-colors duration-300 mt-6" />
-          </motion.div>
-        ))}
-      </motion.div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
