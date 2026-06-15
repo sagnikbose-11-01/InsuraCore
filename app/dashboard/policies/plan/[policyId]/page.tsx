@@ -15,7 +15,7 @@ import Link from 'next/link';
 import {
   ChevronLeft, ShieldCheck, DollarSign, Clock, CheckCircle2,
   AlertTriangle, ArrowRight, Sparkles, Info, ListChecks, Tag,
-  Star, Users, TrendingUp,
+  Star, Users, TrendingUp, ShieldAlert
 } from 'lucide-react';
 import { PolicyStatus, PolicyType } from '@/lib/constants/enums';
 import { SerializedPolicy } from '@/types';
