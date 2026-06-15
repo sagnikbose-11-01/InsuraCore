@@ -37,7 +37,7 @@ export default async function AssessorPoliciesPage() {
       <AssessorPoliciesWorkspace
         initialPolicies={policies}
         analytics={analytics}
-        specialization={session.specialization}
+        specialization={session.specialization as string || ''}
         assessorId={session.id}
       />
     </div>
