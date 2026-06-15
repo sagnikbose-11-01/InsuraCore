@@ -5,6 +5,7 @@ import { ShieldCheck, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/utils/formatters';
 import { PolicyType } from '@/lib/constants/enums';
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Insurance Plans & Policies | InsuraCore',
