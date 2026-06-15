@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/session';
 import { getAdminSystemHealth } from '@/services/admin.service';
-import { DashboardShell } from '@/components/shared/DashboardShell';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { AdminSystemHealth } from '@/components/admin/AdminSystemHealth';
 import { UserRole } from '@/lib/constants/enums';

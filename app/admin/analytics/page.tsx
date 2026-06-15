@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/session';
 import { getAdminAnalyticsData } from '@/services/admin.service';
-import { DashboardShell } from '@/components/shared/DashboardShell';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { AdminAnalyticsCharts } from '@/components/admin/AdminAnalyticsCharts';
 import { UserRole } from '@/lib/constants/enums';
