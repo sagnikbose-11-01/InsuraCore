@@ -176,6 +176,5 @@ export default async function AssessorPolicyDetailsPage({ params }: Props) {
           </div>
         </div>
       </div>
-    </div>
   );
 }
