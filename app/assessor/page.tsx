@@ -45,6 +45,7 @@ export default async function AssessorDashboard() {
   const highValueClaims = activeClaims.filter(c => c.claimAmount >= 100000);
   const awaitingDocs = activeClaims.filter(c => c.status === 'DOCUMENT_VERIFICATION');
   const urgentReviews = activeClaims.filter(c => c.priority === 'HIGH' || c.riskScore >= 80);
+  const newClaims = activeClaims.filter(c => c.status === 'SUBMITTED');
   
   const now = new Date();
   const slaDeadlineClaims = activeClaims.filter(c => {
@@ -169,7 +170,7 @@ export default async function AssessorDashboard() {
                 <p className="text-xs text-[var(--color-base-400)] mt-0.5">Critical items requiring immediate intervention</p>
               </div>
               <span className="text-xs px-2 py-0.5 font-bold rounded bg-red-500/10 border border-red-500/20 text-red-400 uppercase tracking-wider">
-                {highValueClaims.length + awaitingDocs.length + urgentReviews.length + slaDeadlineClaims.length} Alerts
+                {highValueClaims.length + awaitingDocs.length + urgentReviews.length + slaDeadlineClaims.length + newClaims.length} Alerts
               </span>
             </div>
 
@@ -181,6 +182,24 @@ export default async function AssessorDashboard() {
               </div>
             ) : (
               <div className="space-y-3">
+                {/* New Claims */}
+                {newClaims.map(c => (
+                  <div key={`new-claim-${c._id}`} className="flex items-center justify-between p-3.5 rounded-xl bg-blue-500/5 border border-blue-500/15 gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-4 h-4 text-blue-400" />
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-blue-400 block">New Claim Submitted</span>
+                        <span className="text-sm font-semibold text-white">{c.title} ({(c.customerId as SerializedUser)?.name || 'Customer'})</span>
+                      </div>
+                    </div>
+                    <Link href={`/assessor/review/${c._id}`} className="p-2 rounded-lg bg-[var(--color-base-900)] border border-[rgba(255,255,255,0.06)] hover:bg-[var(--color-base-800)] text-[var(--color-base-300)] hover:text-white text-xs font-bold transition-all">
+                      Review
+                    </Link>
+                  </div>
+                ))}
+
                 {/* High Value Alert */}
                 {highValueClaims.map(c => (
                   <div key={`high-val-${c._id}`} className="flex items-center justify-between p-3.5 rounded-xl bg-red-500/5 border border-red-500/15 gap-4">
