@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/db/mongoose';
+import { connectDB } from '@/lib/db/mongoose';
 import Policy from '@/models/Policy';
 import { PolicyListingStatus, PolicyType } from '@/lib/constants/enums';
 
@@ -233,7 +233,7 @@ const DEFAULT_POLICIES = [
 
 export async function GET(req: Request) {
   try {
-    await connectToDatabase();
+    await connectDB();
 
     // Check if we already have policies
     const existingCount = await Policy.countDocuments();
