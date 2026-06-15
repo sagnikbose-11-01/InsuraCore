@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, Search, Send, Sparkles, MessageSquare, ChevronRight, User } from 'lucide-react';
+import { Bot, Search, Send, Sparkles, MessageSquare, ChevronRight, User, FileText, ShieldCheck, Activity, CreditCard, Clock, FileCheck, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 interface FAQ {
   q: string;
@@ -137,7 +138,7 @@ const FAQ_LIST: FAQ[] = [
   }
 ];
 
-const CATEGORIES = ["All", "General", "Policies", "Claims", "Roles", "Security", "Account"];
+const CATEGORIES = ["All", "Policies", "Claims", "Roles", "Security"];
 
 interface ChatMessage {
   sender: 'bot' | 'user';
@@ -145,13 +146,20 @@ interface ChatMessage {
   timestamp: Date;
 }
 
+const QUICK_QUESTIONS = [
+  "How do I file a claim?",
+  "Show policy coverage",
+  "Claim settlement timeline",
+  "Required documents",
+];
+
 export function AIAssistantFAQ() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
     {
       sender: 'bot',
-      text: "Hi! I am the InsuraCore AI Agent. Type a question in the input below, or choose one from the list to start chatting!",
+      text: "Hi! I am the InsuraCore AI Copilot. How can I assist you with your insurance needs today?",
       timestamp: new Date()
     }
   ]);
@@ -161,7 +169,6 @@ export function AIAssistantFAQ() {
   
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll chat history
   useEffect(() => {
     if (chatHistory.length > 1 || isTyping) {
       chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -177,85 +184,60 @@ export function AIAssistantFAQ() {
     const matches = FAQ_LIST.filter(faq => 
       faq.q.toLowerCase().includes(val.toLowerCase()) || 
       faq.a.toLowerCase().includes(val.toLowerCase())
-    ).slice(0, 4);
+    ).slice(0, 3);
     setInputSuggestions(matches);
   };
 
-  const handleQuestionClick = (faq: FAQ) => {
+  const submitQuestion = (question: string, answer?: string) => {
     if (isTyping) return;
 
-    // Add user question
-    const userMsg: ChatMessage = {
-      sender: 'user',
-      text: faq.q,
-      timestamp: new Date()
-    };
+    const userMsg: ChatMessage = { sender: 'user', text: question, timestamp: new Date() };
     setChatHistory(prev => [...prev, userMsg]);
     setIsTyping(true);
 
-    // Simulate bot typing response
     setTimeout(() => {
-      const botMsg: ChatMessage = {
-        sender: 'bot',
-        text: faq.a,
-        timestamp: new Date()
-      };
+      let responseText = answer;
+      if (!responseText) {
+        // Fallback matching
+        const words = question.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+        let bestMatch: FAQ | null = null;
+        let maxScore = 0;
+        
+        for (const faq of FAQ_LIST) {
+          let score = 0;
+          const qLower = faq.q.toLowerCase();
+          const aLower = faq.a.toLowerCase();
+          for (const w of words) {
+            if (qLower.includes(w)) score += 3;
+            else if (aLower.includes(w)) score += 1;
+          }
+          if (score > maxScore) { maxScore = score; bestMatch = faq; }
+        }
+
+        if (bestMatch && maxScore > 0) {
+          responseText = `Based on your question:\n\n**${bestMatch.q}**\n\n${bestMatch.a}`;
+        } else {
+          responseText = "I couldn't find an exact match in my knowledge base. Please try selecting a topic on the right, or rephrasing your question!";
+        }
+      }
+
+      const botMsg: ChatMessage = { sender: 'bot', text: responseText, timestamp: new Date() };
       setChatHistory(prev => [...prev, botMsg]);
       setIsTyping(false);
     }, 800);
   };
 
+  const handleQuestionClick = (faq: FAQ) => {
+    submitQuestion(faq.q, faq.a);
+  };
+
   const handleInputSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!typedQuery.trim() || isTyping) return;
-
     const query = typedQuery.trim();
     setTypedQuery('');
     setInputSuggestions([]);
-
-    const userMsg: ChatMessage = {
-      sender: 'user',
-      text: query,
-      timestamp: new Date()
-    };
-    setChatHistory(prev => [...prev, userMsg]);
-    setIsTyping(true);
-
-    setTimeout(() => {
-      // Find closest match based on word frequency scoring
-      const words = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-      let bestMatch: FAQ | null = null;
-      let maxScore = 0;
-      
-      for (const faq of FAQ_LIST) {
-        let score = 0;
-        const qLower = faq.q.toLowerCase();
-        const aLower = faq.a.toLowerCase();
-        for (const w of words) {
-          if (qLower.includes(w)) score += 3;
-          else if (aLower.includes(w)) score += 1;
-        }
-        if (score > maxScore) {
-          maxScore = score;
-          bestMatch = faq;
-        }
-      }
-
-      let responseText = "";
-      if (bestMatch && maxScore > 0) {
-        responseText = `Based on your question, here is what I found:\n\n**${bestMatch.q}**\n\n${bestMatch.a}`;
-      } else {
-        responseText = "I couldn't find an exact match for that question in my 25 FAQs. Please select one of the topics on the right, or try searching for keywords like 'claims', 'policies', 'verification', or 'security'.";
-      }
-
-      const botMsg: ChatMessage = {
-        sender: 'bot',
-        text: responseText,
-        timestamp: new Date()
-      };
-      setChatHistory(prev => [...prev, botMsg]);
-      setIsTyping(false);
-    }, 850);
+    submitQuestion(query);
   };
 
   const filteredFAQs = FAQ_LIST.filter(faq => {
@@ -266,54 +248,45 @@ export function AIAssistantFAQ() {
   });
 
   return (
-    <div className="grid lg:grid-cols-12 gap-8 items-stretch max-w-7xl mx-auto">
-      {/* LEFT: AI Chat Terminal Console */}
-      <div className="lg:col-span-6 flex flex-col border border-[var(--color-base-800)] bg-[var(--color-base-950)] rounded-2xl overflow-hidden shadow-2xl min-h-[500px] max-h-[600px] relative">
-        {/* Chat Header */}
-        <div className="px-5 py-4 bg-[var(--color-base-900)] border-b border-[var(--color-base-800)] flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[oklch(18%_0.08_230)] border border-[oklch(28%_0.10_230)] flex items-center justify-center text-[var(--color-brand-400)]">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch w-full">
+      {/* LEFT: AI Chat Assistant */}
+      <div className="lg:col-span-4 flex flex-col border border-[var(--color-base-800)] bg-[var(--color-base-950)] rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)] min-h-[550px] max-h-[600px] relative">
+        <div className="px-5 py-4 bg-gradient-to-r from-[var(--color-base-900)] to-[var(--color-base-950)] border-b border-[var(--color-base-800)] flex items-center justify-between relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[oklch(72%_0.20_230)]/10 blur-[30px] -mt-10 -mr-10" />
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="w-10 h-10 rounded-xl bg-[oklch(18%_0.08_230)] border border-[oklch(28%_0.10_230)] flex items-center justify-center text-[oklch(72%_0.20_230)] shadow-inner">
               <Bot className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-[var(--color-base-100)] flex items-center gap-1.5">
-                InsuraCore AI Agent
-                <span className="inline-flex w-2 h-2 rounded-full bg-[var(--color-success-400)] animate-pulse" />
+              <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                AI Assistant
+                <span className="inline-flex w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_#34d399]" />
               </h4>
-              <span className="text-[11px] text-[var(--color-base-500)]">Knowledge Base Assistant</span>
+              <span className="text-[11px] text-[var(--color-base-400)] font-medium">Online & Ready</span>
             </div>
           </div>
-          <span className="text-xs bg-[var(--color-base-800)] text-[var(--color-base-300)] px-2.5 py-1 rounded-md font-medium border border-[var(--color-base-750)]">
-            25 FAQs Loaded
-          </span>
         </div>
 
-        {/* Message Thread */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-[linear-gradient(to_bottom,var(--color-base-950),var(--color-base-900))]">
           {chatHistory.map((msg, idx) => (
-            <div 
-              key={idx} 
-              className={`flex gap-3 max-w-[85%] ${msg.sender === 'user' ? 'ml-auto flex-row-reverse' : ''}`}
-            >
+            <div key={idx} className={`flex gap-3 max-w-[90%] ${msg.sender === 'user' ? 'ml-auto flex-row-reverse' : ''}`}>
               {msg.sender === 'bot' ? (
-                <div className="w-7 h-7 rounded-full bg-[var(--color-base-900)] border border-[var(--color-base-800)] flex items-center justify-center text-[var(--color-brand-400)] flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-[var(--color-base-900)] border border-[oklch(28%_0.10_230)] flex items-center justify-center text-[oklch(72%_0.20_230)] flex-shrink-0 shadow-sm mt-1">
                   <Bot className="w-4 h-4" />
                 </div>
               ) : (
-                <div className="w-7 h-7 rounded-full bg-[var(--color-brand-900)] flex items-center justify-center text-white flex-shrink-0 text-xs font-bold border border-[var(--color-brand-700)]">
-                  <User className="w-3.5 h-3.5" />
+                <div className="w-8 h-8 rounded-full bg-[oklch(72%_0.20_230)] flex items-center justify-center text-white flex-shrink-0 font-bold border border-[oklch(58%_0.22_230)] shadow-sm mt-1">
+                  <User className="w-4 h-4" />
                 </div>
               )}
-
-              <div 
-                className={`p-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed border ${
+              <div className={`p-3.5 text-[13px] leading-relaxed shadow-md backdrop-blur-sm ${
                   msg.sender === 'user' 
-                    ? 'bg-[var(--color-brand-500)] text-white border-transparent shadow-lg rounded-tr-none' 
-                    : 'bg-[var(--color-base-900)] text-[var(--color-base-300)] border-[var(--color-base-800)] rounded-tl-none whitespace-pre-line'
+                    ? 'bg-gradient-to-br from-[oklch(58%_0.22_230)] to-[oklch(45%_0.20_230)] text-white border-transparent rounded-2xl rounded-tr-sm' 
+                    : 'bg-white/[0.03] text-[var(--color-base-200)] border border-[var(--color-base-800)] rounded-2xl rounded-tl-sm whitespace-pre-line'
                 }`}
               >
                 {msg.text}
-                <div className="mt-1 text-[9px] text-[var(--color-base-500)] text-right select-none">
+                <div className={`mt-1.5 text-[9px] select-none flex items-center gap-1 ${msg.sender === 'user' ? 'text-indigo-100 justify-end' : 'text-[var(--color-base-500)] justify-start'}`}>
                   {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
@@ -322,94 +295,131 @@ export function AIAssistantFAQ() {
 
           {isTyping && (
             <div className="flex gap-3 max-w-[85%]">
-              <div className="w-7 h-7 rounded-full bg-[var(--color-base-900)] border border-[var(--color-base-800)] flex items-center justify-center text-[var(--color-brand-400)] flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-[var(--color-base-900)] border border-[oklch(28%_0.10_230)] flex items-center justify-center text-[oklch(72%_0.20_230)] flex-shrink-0 mt-1">
                 <Bot className="w-4 h-4" />
               </div>
-              <div className="bg-[var(--color-base-900)] border border-[var(--color-base-800)] rounded-2xl rounded-tl-none p-3.5 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-brand-400)] animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-brand-400)] animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-brand-400)] animate-bounce" style={{ animationDelay: '300ms' }} />
+              <div className="bg-white/[0.03] border border-[var(--color-base-800)] rounded-2xl rounded-tl-sm p-4 flex items-center gap-1.5 backdrop-blur-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-[oklch(72%_0.20_230)] animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-[oklch(72%_0.20_230)] animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-[oklch(72%_0.20_230)] animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
           )}
-          <div ref={chatEndRef} />
-        </div>
 
-        {/* Input Bar with Suggestions */}
-        <div className="relative p-4 bg-[var(--color-base-900)] border-t border-[var(--color-base-800)] flex flex-col gap-2">
-          {/* Autocomplete Suggestions Popover */}
-          {inputSuggestions.length > 0 && (
-            <div className="absolute bottom-[calc(100%+4px)] left-4 right-4 bg-[var(--color-base-950)] border border-[var(--color-base-800)] rounded-xl shadow-2xl overflow-hidden z-20 divide-y divide-[var(--color-base-850)]">
-              <div className="px-3.5 py-2 bg-[var(--color-base-900)] text-[10px] uppercase font-bold text-[var(--color-brand-400)] tracking-wider flex items-center justify-between">
-                <span>Suggested Questions</span>
-                <span className="text-[9px] text-[var(--color-base-500)] lowercase normal-case">click to ask</span>
-              </div>
-              {inputSuggestions.map((faq, idx) => (
+          {chatHistory.length === 1 && !isTyping && (
+            <div className="pt-4 flex flex-wrap gap-2">
+              {QUICK_QUESTIONS.map((qq, idx) => (
                 <button
                   key={idx}
-                  type="button"
-                  onClick={() => {
-                    handleQuestionClick(faq);
-                    setTypedQuery('');
-                    setInputSuggestions([]);
-                  }}
-                  className="w-full text-left px-4 py-2.5 text-xs text-[var(--color-base-300)] hover:text-white hover:bg-[var(--color-base-900)] transition-colors flex items-center justify-between group"
+                  onClick={() => submitQuestion(qq)}
+                  className="px-3 py-1.5 rounded-full bg-[var(--color-base-900)] border border-[var(--color-base-800)] hover:border-[oklch(72%_0.20_230)] text-[11px] text-[var(--color-base-300)] hover:text-white transition-all text-left"
                 >
-                  <span className="truncate">{faq.q}</span>
-                  <ChevronRight className="w-3 h-3 text-[var(--color-base-600)] group-hover:text-[var(--color-brand-400)] flex-shrink-0 ml-2" />
+                  {qq}
                 </button>
               ))}
             </div>
           )}
 
-          <form onSubmit={handleInputSubmit} className="flex items-center gap-3 w-full">
+          <div ref={chatEndRef} />
+        </div>
+
+        <div className="relative p-4 bg-[var(--color-base-950)] border-t border-[var(--color-base-800)]">
+          {inputSuggestions.length > 0 && (
+            <div className="absolute bottom-[calc(100%+8px)] left-4 right-4 bg-[var(--color-base-900)] border border-[var(--color-base-700)] rounded-xl shadow-2xl overflow-hidden z-20">
+              <div className="px-3 py-2 bg-[var(--color-base-950)] text-[10px] uppercase font-bold text-[oklch(72%_0.20_230)] border-b border-[var(--color-base-800)]">
+                Suggested
+              </div>
+              {inputSuggestions.map((faq, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => { handleQuestionClick(faq); setTypedQuery(''); setInputSuggestions([]); }}
+                  className="w-full text-left px-3 py-2.5 text-xs text-[var(--color-base-300)] hover:text-white hover:bg-[var(--color-base-800)] transition-colors border-b border-[var(--color-base-850)] last:border-0"
+                >
+                  {faq.q}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <form onSubmit={handleInputSubmit} className="relative flex items-center">
             <input
               type="text"
               value={typedQuery}
               onChange={(e) => handleInputChange(e.target.value)}
-              placeholder="Type a question or query here..."
-              className="flex-1 bg-[var(--color-base-950)] border border-[var(--color-base-850)] focus:border-[var(--color-brand-500)] focus:outline-none px-3.5 py-2.5 rounded-xl text-xs sm:text-sm text-[var(--color-base-200)] placeholder-[var(--color-base-600)] transition-colors"
+              placeholder="Ask anything..."
+              className="w-full bg-[var(--color-base-900)] border border-[var(--color-base-800)] focus:border-[oklch(72%_0.20_230)] focus:outline-none focus:ring-1 focus:ring-[oklch(72%_0.20_230)] rounded-full pl-4 pr-12 py-3 text-xs sm:text-sm text-white placeholder-[var(--color-base-500)] transition-all shadow-inner"
             />
             <button
               type="submit"
               disabled={!typedQuery.trim() || isTyping}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+              className={`absolute right-1.5 w-9 h-9 rounded-full flex items-center justify-center transition-all ${
                 typedQuery.trim() && !isTyping
-                  ? 'bg-[var(--color-brand-500)] text-white hover:bg-[var(--color-brand-600)] shadow-lg'
-                  : 'bg-[var(--color-base-800)] text-[var(--color-base-500)] cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-[oklch(58%_0.22_230)] to-[oklch(45%_0.20_230)] text-white shadow-lg'
+                  : 'bg-transparent text-[var(--color-base-600)] cursor-not-allowed'
               }`}
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-4 h-4 ml-0.5" />
             </button>
           </form>
         </div>
       </div>
 
-      {/* RIGHT: Questions Explorer list */}
-      <div className="lg:col-span-6 flex flex-col border border-[var(--color-base-800)] bg-[var(--color-base-900)] rounded-2xl overflow-hidden min-h-[500px] max-h-[600px]">
-        {/* Search & Filter Header */}
-        <div className="p-5 border-b border-[var(--color-base-800)] space-y-4">
+      {/* CENTER: AI Suggested Actions */}
+      <div className="lg:col-span-4 flex flex-col gap-4">
+        <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 px-1">
+          <Sparkles className="w-4 h-4 text-[oklch(72%_0.20_230)]" />
+          Suggested Actions
+        </h3>
+        <div className="grid grid-cols-2 gap-3 flex-1 content-start">
+          {[
+            { icon: FileText, title: "File a Claim", desc: "Start a new claim process", href: "/login", gradient: "from-blue-500/20 to-blue-500/0", iconColor: "text-blue-400" },
+            { icon: ShieldCheck, title: "Browse Policies", desc: "View available coverage", href: "/policies", gradient: "from-purple-500/20 to-purple-500/0", iconColor: "text-purple-400" },
+            { icon: Activity, title: "Track Settlement", desc: "Check payout status", href: "/login", gradient: "from-emerald-500/20 to-emerald-500/0", iconColor: "text-emerald-400" },
+            { icon: Clock, title: "Check Claim Status", desc: "Review ongoing claims", href: "/login", gradient: "from-orange-500/20 to-orange-500/0", iconColor: "text-orange-400" },
+            { icon: CreditCard, title: "Coverage Calc", desc: "Estimate premium costs", href: "/policies", gradient: "from-pink-500/20 to-pink-500/0", iconColor: "text-pink-400" },
+            { icon: FileCheck, title: "Doc Checklist", desc: "Required documents", href: "/login", gradient: "from-sky-500/20 to-sky-500/0", iconColor: "text-sky-400" },
+          ].map((action, idx) => (
+            <Link 
+              key={idx} 
+              href={action.href}
+              className="group flex flex-col p-4 rounded-2xl bg-[var(--color-base-900)] border border-[var(--color-base-800)] hover:border-[var(--color-base-600)] transition-all hover:-translate-y-1 shadow-lg relative overflow-hidden"
+            >
+              <div className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+              <action.icon className={`w-6 h-6 mb-3 relative z-10 ${action.iconColor} group-hover:scale-110 transition-transform`} />
+              <h4 className="text-[13px] font-bold text-white relative z-10">{action.title}</h4>
+              <span className="text-[10px] text-[var(--color-base-400)] mt-1 relative z-10 leading-tight">{action.desc}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* RIGHT: Knowledge Center */}
+      <div className="lg:col-span-4 flex flex-col border border-[var(--color-base-800)] bg-[var(--color-base-950)] rounded-2xl overflow-hidden min-h-[550px] max-h-[600px] shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+        <div className="p-5 border-b border-[var(--color-base-800)] bg-gradient-to-br from-[var(--color-base-900)] to-[var(--color-base-950)]">
+          <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+            <Search className="w-4 h-4 text-[oklch(72%_0.20_230)]" />
+            Knowledge Base
+          </h3>
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-base-500)]" />
             <input 
               type="text" 
-              placeholder="Search 25 frequently asked questions..." 
+              placeholder="Search guides & FAQs..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[var(--color-base-950)] border border-[var(--color-base-800)] focus:border-[var(--color-brand-500)] focus:outline-none rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-[var(--color-base-200)] placeholder-[var(--color-base-600)] transition-colors"
+              className="w-full bg-[var(--color-base-950)] border border-[var(--color-base-800)] focus:border-[oklch(72%_0.20_230)] focus:outline-none rounded-xl pl-10 pr-4 py-2.5 text-xs text-[var(--color-base-200)] placeholder-[var(--color-base-500)] transition-all shadow-inner"
             />
           </div>
-
-          {/* Category tabs */}
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5 mt-3">
             {CATEGORIES.map(category => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold border transition-all ${
+                className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide border transition-all ${
                   selectedCategory === category
-                    ? 'bg-[var(--color-brand-500)] text-white border-transparent shadow-md'
-                    : 'bg-[var(--color-base-950)] text-[var(--color-base-400)] border-[var(--color-base-800)] hover:text-[var(--color-base-200)]'
+                    ? 'bg-[oklch(18%_0.08_230)] text-[oklch(72%_0.20_230)] border-[oklch(28%_0.10_230)] shadow-inner'
+                    : 'bg-transparent text-[var(--color-base-400)] border-[var(--color-base-800)] hover:bg-[var(--color-base-900)] hover:text-white'
                 }`}
               >
                 {category}
@@ -418,37 +428,36 @@ export function AIAssistantFAQ() {
           </div>
         </div>
 
-        {/* Scrollable Questions list */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-2.5 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar bg-[linear-gradient(to_bottom,var(--color-base-950),var(--color-base-900))]">
           {filteredFAQs.length > 0 ? (
             filteredFAQs.map((faq, idx) => (
               <button
                 key={idx}
                 onClick={() => handleQuestionClick(faq)}
                 disabled={isTyping}
-                className="w-full text-left p-3.5 rounded-xl bg-[var(--color-base-950)] border border-[var(--color-base-850)] hover:border-[var(--color-brand-500)] hover:bg-[var(--color-base-900)] transition-all group flex items-start gap-3 justify-between"
+                className="w-full text-left p-3.5 rounded-xl bg-[var(--color-base-900)] border border-[var(--color-base-800)] hover:border-[oklch(72%_0.20_230)] hover:bg-[oklch(18%_0.08_230)] transition-all group flex items-start gap-3 justify-between shadow-sm"
               >
-                <div className="space-y-1">
+                <div className="space-y-1.5 pr-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase font-bold text-[var(--color-brand-400)] tracking-wider">
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-[var(--color-base-800)] text-[var(--color-base-300)] uppercase font-bold tracking-wider group-hover:bg-[oklch(28%_0.10_230)] group-hover:text-[oklch(72%_0.20_230)] transition-colors">
                       {faq.category}
                     </span>
                   </div>
-                  <h5 className="text-xs sm:text-sm font-semibold text-[var(--color-base-200)] group-hover:text-white transition-colors leading-snug">
+                  <h5 className="text-[13px] font-semibold text-[var(--color-base-100)] group-hover:text-white transition-colors leading-snug">
                     {faq.q}
                   </h5>
                 </div>
-                <ChevronRight className="w-4 h-4 text-[var(--color-base-600)] group-hover:text-[var(--color-brand-400)] group-hover:translate-x-0.5 transition-all mt-1 flex-shrink-0" />
+                <ArrowRight className="w-4 h-4 text-[var(--color-base-600)] group-hover:text-[oklch(72%_0.20_230)] group-hover:translate-x-1 transition-all mt-1 flex-shrink-0" />
               </button>
             ))
           ) : (
             <div className="py-12 text-center space-y-2">
-              <p className="text-sm text-[var(--color-base-500)]">No matching questions found.</p>
+              <p className="text-sm text-[var(--color-base-500)]">No guides match your search.</p>
               <button 
                 onClick={() => { setSearchTerm(''); setSelectedCategory('All'); }} 
-                className="text-xs text-[var(--color-brand-400)] hover:underline"
+                className="text-xs text-[oklch(72%_0.20_230)] hover:underline font-bold"
               >
-                Clear filters
+                Clear all filters
               </button>
             </div>
           )}
