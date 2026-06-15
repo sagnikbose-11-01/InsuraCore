@@ -18,6 +18,7 @@ const NAV_LINKS = [
   { href: '/assessor/reviews', label: 'Review Center', icon: CheckSquare },
   { href: '/assessor/customers', label: 'Customer Directory', icon: Users },
   { href: '/assessor/history', label: 'Claim History', icon: History },
+  { href: '/assessor/policies', label: 'Policy Management', icon: FileText },
   { href: '/assessor/notifications', label: 'Notifications', icon: Bell },
   { href: '/assessor/performance', label: 'My Performance', icon: Award },
   { href: '/assessor/reports', label: 'Reports', icon: FileSpreadsheet },

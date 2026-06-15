@@ -46,11 +46,11 @@ export async function registerUser(
     }
   } else if (role === UserRole.ADMIN) {
     if (!localPart.startsWith('admin')) {
-      throw new Error('Unauthorized admin registration attempt.');
+      throw new Error('Admin email must start with "admin".');
     }
     const envCode = process.env.ADMIN_INVITE_CODE || 'INSURACORE_ADMIN_2026';
     if (!input.adminAccessCode || input.adminAccessCode !== envCode) {
-      throw new Error('Unauthorized admin registration attempt.');
+      throw new Error('Invalid Admin Access Code.');
     }
   }
 

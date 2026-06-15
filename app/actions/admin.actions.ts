@@ -37,7 +37,61 @@ export async function adminCreateUserAction(formData: FormData): Promise<ActionR
   try {
     const { user } = await registerUser(parsed.data);
     revalidatePath('/admin/users');
+    revalidatePath('/admin/customers');
+    revalidatePath('/admin/assessors');
     return { success: true, message: 'User created successfully!', data: user };
+  } catch (err) {
+    return { success: false, message: (err as Error).message };
+  }
+}
+
+export async function adminSuspendUserAction(userId: string): Promise<ActionResponse<void>> {
+  const session = await getSession();
+  if (!session || session.role !== UserRole.ADMIN) {
+    return { success: false, message: 'Unauthorized' };
+  }
+
+  try {
+    const { adminSuspendUser } = await import('@/services/admin.service');
+    await adminSuspendUser(userId);
+    revalidatePath('/admin/customers');
+    revalidatePath('/admin/assessors');
+    return { success: true, message: 'User suspended successfully' };
+  } catch (err) {
+    return { success: false, message: (err as Error).message };
+  }
+}
+
+export async function adminActivateUserAction(userId: string): Promise<ActionResponse<void>> {
+  const session = await getSession();
+  if (!session || session.role !== UserRole.ADMIN) {
+    return { success: false, message: 'Unauthorized' };
+  }
+
+  try {
+    const { adminActivateUser } = await import('@/services/admin.service');
+    await adminActivateUser(userId);
+    revalidatePath('/admin/customers');
+    revalidatePath('/admin/assessors');
+    return { success: true, message: 'User activated successfully' };
+  } catch (err) {
+    return { success: false, message: (err as Error).message };
+  }
+}
+
+export async function adminReassignClaimAction(claimId: string, assessorId: string): Promise<ActionResponse<void>> {
+  const session = await getSession();
+  if (!session || session.role !== UserRole.ADMIN) {
+    return { success: false, message: 'Unauthorized' };
+  }
+
+  try {
+    const { adminReassignClaim } = await import('@/services/admin.service');
+    await adminReassignClaim(claimId, assessorId);
+    revalidatePath('/admin/claims');
+    revalidatePath('/admin/approvals');
+    revalidatePath('/admin');
+    return { success: true, message: 'Claim reassigned successfully' };
   } catch (err) {
     return { success: false, message: (err as Error).message };
   }

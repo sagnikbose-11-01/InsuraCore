@@ -115,3 +115,36 @@ export async function deletePolicyAction(policyId: string): Promise<ActionRespon
     return { success: false, message: (err as Error).message };
   }
 }
+
+import { adminApprovePolicy, adminRejectPolicy } from '@/services/admin.service';
+
+export async function approvePolicyAction(policyId: string, comments?: string): Promise<ActionResponse> {
+  const session = await getSession();
+  if (!session || session.role !== UserRole.ADMIN) {
+    return { success: false, message: 'Unauthorized' };
+  }
+
+  try {
+    await adminApprovePolicy(policyId, session.id, comments);
+    revalidatePath('/admin/policies');
+    revalidatePath('/dashboard/policies');
+    return { success: true, message: 'Policy approved successfully!' };
+  } catch (err) {
+    return { success: false, message: (err as Error).message };
+  }
+}
+
+export async function rejectPolicyAction(policyId: string, comments?: string): Promise<ActionResponse> {
+  const session = await getSession();
+  if (!session || session.role !== UserRole.ADMIN) {
+    return { success: false, message: 'Unauthorized' };
+  }
+
+  try {
+    await adminRejectPolicy(policyId, session.id, comments);
+    revalidatePath('/admin/policies');
+    return { success: true, message: 'Policy rejected.' };
+  } catch (err) {
+    return { success: false, message: (err as Error).message };
+  }
+}

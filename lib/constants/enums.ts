@@ -37,6 +37,13 @@ export enum PolicyStatus {
   CANCELLED = 'CANCELLED',
 }
 
+export enum PolicyListingStatus {
+  PENDING_ADMIN_APPROVAL = 'PENDING_ADMIN_APPROVAL',
+  ACTIVE = 'ACTIVE',
+  REJECTED = 'REJECTED',
+  INACTIVE = 'INACTIVE',
+}
+
 export enum PolicyType {
   HEALTH = 'HEALTH',
   AUTO = 'AUTO',

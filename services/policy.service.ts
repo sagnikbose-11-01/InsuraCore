@@ -12,7 +12,7 @@ import Notification from '@/models/Notification';
 import User from '@/models/User';
 import AuditLog from '@/models/AuditLog';
 import { CreatePolicyInput } from '@/lib/validators/policy.validators';
-import { PolicyStatus, ClaimStatus } from '@/lib/constants/enums';
+import { PolicyStatus, ClaimStatus, PolicyListingStatus } from '@/lib/constants/enums';
 import { SerializedPolicy, SerializedPurchasedPolicy, SerializedPurchasedPolicyWithStats, PolicyClaimStats } from '@/types';
 import { addMonths } from 'date-fns';
 import { serializePolicy, serializePurchasedPolicy } from '@/lib/utils/policy.serializers';
@@ -37,12 +37,12 @@ export async function updatePolicy(
 
 export async function deletePolicy(id: string): Promise<void> {
   await connectDB();
-  await Policy.findByIdAndUpdate(id, { isActive: false });
+  await Policy.findByIdAndUpdate(id, { status: PolicyListingStatus.INACTIVE });
 }
 
 export async function getAllPolicies(activeOnly = false): Promise<SerializedPolicy[]> {
   await connectDB();
-  const filter = activeOnly ? { isActive: true } : {};
+  const filter = activeOnly ? { status: PolicyListingStatus.ACTIVE } : {};
   const policies = await Policy.find(filter).sort({ createdAt: -1 });
   return policies.map(serializePolicy);
 }
@@ -67,7 +67,7 @@ export async function purchasePolicy(
   await connectDB();
 
   const policy = await Policy.findById(policyId);
-  if (!policy || !policy.isActive) throw new Error('Policy not found or inactive');
+  if (!policy || policy.status !== PolicyListingStatus.ACTIVE) throw new Error('Policy not found or inactive');
 
   const startDate = new Date();
   const endDate = addMonths(startDate, policy.validityPeriod);
@@ -176,11 +176,11 @@ export async function getMarketplaceStats(): Promise<{
   await connectDB();
 
   const [availablePlans, activeCustomers, claimsProcessed, coverageAgg] = await Promise.all([
-    Policy.countDocuments({ isActive: true }),
+    Policy.countDocuments({ status: PolicyListingStatus.ACTIVE }),
     PurchasedPolicy.countDocuments({ status: PolicyStatus.ACTIVE }),
     Claim.countDocuments({}),
     Policy.aggregate([
-      { $match: { isActive: true } },
+      { $match: { status: PolicyListingStatus.ACTIVE } },
       { $group: { _id: null, total: { $sum: '$coverageAmount' } } },
     ]),
   ]);

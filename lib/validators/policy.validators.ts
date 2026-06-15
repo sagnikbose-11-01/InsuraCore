@@ -14,6 +14,20 @@ export const CreatePolicySchema = z.object({
   coverageAmount: z.number().positive('Coverage amount must be positive'),
   validityPeriod: z.number().int().positive('Validity period must be a positive whole number'),
   eligibility: z.array(z.string()).default([]),
+  benefits: z.array(z.string()).default([]),
+  exclusions: z.array(z.string()).default([]),
+  waitingPeriod: z.coerce.number().min(0).default(0),
+  maximumClaimAmount: z.coerce.number().min(0).default(0),
+  requiredDocuments: z.array(z.string()).default([]),
+  riskCategory: z.string().default('Standard'),
+  termsAndConditions: z.string().default(''),
+});
+
+export const AssessorCreatePolicySchema = CreatePolicySchema.extend({
+  type: z.nativeEnum(PolicyType, {
+    errorMap: () => ({ message: 'Assessor policy type must exactly match assessor specialization.' })
+  }),
 });
 
 export type CreatePolicyInput = z.infer<typeof CreatePolicySchema>;
+export type AssessorCreatePolicyInput = z.infer<typeof AssessorCreatePolicySchema>;

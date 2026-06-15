@@ -56,7 +56,7 @@ const policiesToSeed = [
     coverageAmount: 500000,
     validityPeriod: 12,
     eligibility: ['Age between 18 and 65', 'Pre-existing diseases covered after 2 years waiting period'],
-    isActive: true,
+    status: 'ACTIVE',
   },
   {
     name: 'Smart Auto Comprehensive',
@@ -66,7 +66,7 @@ const policiesToSeed = [
     coverageAmount: 300000,
     validityPeriod: 12,
     eligibility: ['Valid driver license', 'Vehicle registered in India', 'Vehicle age under 15 years'],
-    isActive: true,
+    status: 'ACTIVE',
   },
   {
     name: 'Home Shield Property Plan',
@@ -76,7 +76,7 @@ const policiesToSeed = [
     coverageAmount: 2500000,
     validityPeriod: 24,
     eligibility: ['Residential properties only', 'Owner or leaseholder of the property'],
-    isActive: true,
+    status: 'ACTIVE',
   },
   {
     name: 'Term Life Secure',
@@ -86,7 +86,7 @@ const policiesToSeed = [
     coverageAmount: 10000000,
     validityPeriod: 120,
     eligibility: ['Age 18 to 60 years', 'Non-smokers preferred (higher limits)'],
-    isActive: true,
+    status: 'ACTIVE',
   },
   {
     name: 'GlobeTrotter Travel Plus',
@@ -96,7 +96,7 @@ const policiesToSeed = [
     coverageAmount: 150000,
     validityPeriod: 3,
     eligibility: ['Age under 70 years', 'Valid passport holder'],
-    isActive: true,
+    status: 'ACTIVE',
   },
   {
     name: 'Critical Illness Protector',
@@ -106,7 +106,7 @@ const policiesToSeed = [
     coverageAmount: 1500000,
     validityPeriod: 12,
     eligibility: ['Age between 18 and 60', 'No prior history of chronic cardiovascular or oncological conditions'],
-    isActive: true,
+    status: 'ACTIVE',
   },
   {
     name: 'Business Liability Basic',
@@ -116,7 +116,7 @@ const policiesToSeed = [
     coverageAmount: 5000000,
     validityPeriod: 12,
     eligibility: ['Registered MSME or proprietary business', 'Commercial building structure certification'],
-    isActive: true,
+    status: 'ACTIVE',
   },
   {
     name: 'Electric Vehicle Guard',
@@ -126,7 +126,7 @@ const policiesToSeed = [
     coverageAmount: 600000,
     validityPeriod: 12,
     eligibility: ['Valid driving license', 'Registered battery electric vehicle (BEV) or PHEV', 'Vehicle age under 5 years'],
-    isActive: true,
+    status: 'ACTIVE',
   },
   {
     name: 'Family Legacy Secure',
@@ -136,7 +136,7 @@ const policiesToSeed = [
     coverageAmount: 25000000,
     validityPeriod: 240,
     eligibility: ['Age 18 to 55 years', 'Standard diagnostic medical checkup clearance'],
-    isActive: true,
+    status: 'ACTIVE',
   }
 ];
 

@@ -20,6 +20,8 @@ export async function markNotificationAsReadAction(notificationId: string): Prom
     await readService(notificationId);
     revalidatePath('/dashboard/notifications');
     revalidatePath('/dashboard');
+    revalidatePath('/admin/notifications');
+    revalidatePath('/admin');
     return { success: true, message: 'Notification read' };
   } catch (err) {
     return { success: false, message: (err as Error).message };
@@ -34,6 +36,8 @@ export async function markAllNotificationsAsReadAction(): Promise<ActionResponse
     await readAllService(session.id);
     revalidatePath('/dashboard/notifications');
     revalidatePath('/dashboard');
+    revalidatePath('/admin/notifications');
+    revalidatePath('/admin');
     return { success: true, message: 'All notifications marked as read' };
   } catch (err) {
     return { success: false, message: (err as Error).message };

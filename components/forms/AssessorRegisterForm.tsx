@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils/cn';
 
 export function AssessorRegisterForm() {
   const router = useRouter();

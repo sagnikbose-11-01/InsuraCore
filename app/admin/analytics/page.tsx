@@ -1,27 +1,33 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/session';
-import { getClaimsAnalytics } from '@/services/claim.service';
+import { getAdminAnalyticsData } from '@/services/admin.service';
 import { DashboardShell } from '@/components/shared/DashboardShell';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { AnalyticsCharts } from './AnalyticsCharts';
+import { AdminAnalyticsCharts } from '@/components/admin/AdminAnalyticsCharts';
 import { UserRole } from '@/lib/constants/enums';
 
-export const metadata: Metadata = { title: 'Analytics Dashboard' };
+export const metadata: Metadata = {
+  title: 'Business Intelligence Dashboard | Admin Console',
+  description: 'Enterprise business intelligence reports, operational audits, and risk profiles.',
+};
 
 export default async function AdminAnalyticsPage() {
   const session = await getSession();
-  if (!session || session.role !== UserRole.ADMIN) redirect('/login');
+  if (!session || session.role !== UserRole.ADMIN) {
+    redirect('/auth/login');
+  }
 
-  const analytics = await getClaimsAnalytics();
+  // Fetch full enterprise analytics datasets
+  const analyticsData = await getAdminAnalyticsData();
 
   return (
-    <DashboardShell>
+    <div className="space-y-6">
       <PageHeader
-        title="System Analytics"
-        description="Comprehensive analysis of claim trends, payout distributions, and approval rates."
+        title="Business Intelligence Dashboard"
+        description="Auditing financial growth trends, risk profiles, fraud metrics, and assessor productivity ledger."
       />
-      <AnalyticsCharts analytics={analytics} />
-    </DashboardShell>
+      <AdminAnalyticsCharts data={analyticsData} />
+    </div>
   );
 }

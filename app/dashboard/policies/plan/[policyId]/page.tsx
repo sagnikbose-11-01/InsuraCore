@@ -262,6 +262,59 @@ export default async function PlanDetailPage({
               What&apos;s Not Covered
             </h2>
             <div className="grid sm:grid-cols-2 gap-2.5">
+              {policy.eligibility && policy.eligibility.length > 0 && (
+                <div className="bg-[var(--color-base-900)] p-6 rounded-xl border border-[rgba(255,255,255,0.05)] shadow-xl relative overflow-hidden group hover:border-[oklch(72%_0.20_230)]/30 transition-all duration-300">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-[oklch(72%_0.20_230)]/50 group-hover:bg-[oklch(72%_0.20_230)] transition-colors" />
+                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-[oklch(72%_0.20_230)]" />
+                    Eligibility & Rules
+                  </h3>
+                  <ul className="space-y-3">
+                    {policy.eligibility.map((e: string, i: number) => (
+                      <li key={i} className="flex items-start gap-3 text-sm text-[var(--color-base-300)]">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[oklch(72%_0.20_230)] mt-1.5 shrink-0" />
+                        <span className="leading-relaxed">{e}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {policy.benefits && policy.benefits.length > 0 && (
+                <div className="bg-[var(--color-base-900)] p-6 rounded-xl border border-[rgba(255,255,255,0.05)] shadow-xl relative overflow-hidden group hover:border-purple-500/30 transition-all duration-300">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-purple-500/50 group-hover:bg-purple-500 transition-colors" />
+                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-purple-400" />
+                    Key Benefits
+                  </h3>
+                  <ul className="space-y-3">
+                    {policy.benefits.map((e: string, i: number) => (
+                      <li key={i} className="flex items-start gap-3 text-sm text-[var(--color-base-300)]">
+                        <div className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-1.5 shrink-0" />
+                        <span className="leading-relaxed">{e}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {policy.exclusions && policy.exclusions.length > 0 && (
+                <div className="bg-[var(--color-base-900)] p-6 rounded-xl border border-[rgba(255,255,255,0.05)] shadow-xl relative overflow-hidden group hover:border-rose-500/30 transition-all duration-300">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-rose-500/50 group-hover:bg-rose-500 transition-colors" />
+                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <ShieldAlert className="w-5 h-5 text-rose-400" />
+                    Exclusions
+                  </h3>
+                  <ul className="space-y-3">
+                    {policy.exclusions.map((e: string, i: number) => (
+                      <li key={i} className="flex items-start gap-3 text-sm text-[var(--color-base-300)]">
+                        <div className="w-1.5 h-1.5 rounded-full bg-rose-400 mt-1.5 shrink-0" />
+                        <span className="leading-relaxed">{e}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {cfg.exclusions.map(ex => (
                 <div key={ex} className="flex items-start gap-2.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-[oklch(65%_0.20_25)] mt-1.5 flex-shrink-0" />

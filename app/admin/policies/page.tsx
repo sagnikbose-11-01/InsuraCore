@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/session';
 import { getAllPolicies } from '@/services/policy.service';
+import { getAdminPendingPolicies } from '@/services/admin.service';
 import { DashboardShell } from '@/components/shared/DashboardShell';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { AdminPolicyPanel } from './AdminPolicyPanel';
@@ -14,6 +15,7 @@ export default async function AdminPoliciesPage() {
   if (!session || session.role !== UserRole.ADMIN) redirect('/login');
 
   const policies = await getAllPolicies(false); // fetch all policies including inactive ones
+  const pendingPolicies = await getAdminPendingPolicies();
 
   return (
     <DashboardShell>
@@ -21,7 +23,7 @@ export default async function AdminPoliciesPage() {
         title="Policy Management"
         description="Create, update, and manage insurance policy plans."
       />
-      <AdminPolicyPanel initialPolicies={policies} />
+      <AdminPolicyPanel initialPolicies={policies} pendingPolicies={pendingPolicies} />
     </DashboardShell>
   );
 }

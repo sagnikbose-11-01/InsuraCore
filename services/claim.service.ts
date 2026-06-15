@@ -18,7 +18,7 @@ import Payment, { IPayment } from '@/models/Payment';
 import ClaimAuditLog from '@/models/ClaimAuditLog';
 import AuditLog from '@/models/AuditLog';
 import { CreateClaimInput, AssessmentInput, AssignAssessorInput } from '@/lib/validators/claim.validators';
-import { ClaimStatus, DocumentStatus, PolicyType, PaymentStatus } from '@/lib/constants/enums';
+import { ClaimStatus, DocumentStatus, PolicyType, PaymentStatus, UserRole } from '@/lib/constants/enums';
 import { SerializedClaim, SerializedClaimDocument, SerializedClaimAssessment, ClaimsAnalytics, SerializedPayment, SerializedNotification } from '@/types';
 
 // ---- Customer Actions ----
@@ -42,7 +42,7 @@ export async function createClaim(
   // ---- Least-Workload Auto-Assignment Engine ----
   // Find all assessors with matching specialization
   const matchingAssessors = await User.find({ 
-    role: 'ASSESSOR', 
+    role: UserRole.ASSESSOR, 
     specialization: policyType 
   }).select('_id name').lean() as { _id: mongoose.Types.ObjectId; name: string }[];
 
@@ -57,7 +57,7 @@ export async function createClaim(
         assessorName: a.name,
         count: await Claim.countDocuments({
           assignedAssessorId: a._id,
-          status: { $nin: [ClaimStatus.APPROVED, ClaimStatus.REJECTED, 'PAID'] },
+          status: { $nin: [ClaimStatus.APPROVED, ClaimStatus.REJECTED, ClaimStatus.PAID] },
         }),
       }))
     );
