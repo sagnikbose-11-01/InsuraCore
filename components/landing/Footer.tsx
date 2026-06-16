@@ -139,7 +139,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="flex items-center gap-1 text-[11px]">
-            &copy; {new Date().getFullYear()} InsuraCore. Developed with Next.js & TypeScript.
+            &copy; 2026 InsuraCore. All Rights Reserved By Sagnik Bose.
           </p>
 
           <div className="flex gap-4">
