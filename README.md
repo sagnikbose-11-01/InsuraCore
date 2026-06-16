@@ -2,7 +2,7 @@
 
 <div align="center">
 
-### AI-Powered Insurance Management & Claims Processing Platform
+### Enterprise Insurance Management & Claims Processing Platform
 
 A full-stack enterprise-grade InsurTech platform that streamlines policy management, claim processing, assessor workflows, and administrative operations through a modern AI-enhanced ecosystem.
 
